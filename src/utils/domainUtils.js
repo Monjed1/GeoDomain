@@ -72,6 +72,49 @@ export function uniqueByDomain(candidates) {
   });
 }
 
+export function orderCandidatesByRandomPattern(candidates, options = {}) {
+  const buckets = new Map();
+  const preserveScore = Boolean(options.preserveScore);
+
+  for (const candidate of candidates) {
+    const pattern = candidate.pattern || 'Unknown';
+    const bucket = buckets.get(pattern) || [];
+    bucket.push(candidate);
+    buckets.set(pattern, bucket);
+  }
+
+  for (const [pattern, bucket] of buckets.entries()) {
+    const orderedBucket = preserveScore
+      ? [...bucket].sort((left, right) => right.score - left.score || left.root.length - right.root.length)
+      : shuffle(bucket);
+    buckets.set(pattern, orderedBucket);
+  }
+
+  const orderedCandidates = [];
+  let activePatterns = shuffle([...buckets.keys()]);
+
+  while (activePatterns.length > 0) {
+    const nextActivePatterns = [];
+
+    for (const pattern of shuffle(activePatterns)) {
+      const bucket = buckets.get(pattern);
+      const candidate = bucket.shift();
+
+      if (candidate) {
+        orderedCandidates.push(candidate);
+      }
+
+      if (bucket.length > 0) {
+        nextActivePatterns.push(pattern);
+      }
+    }
+
+    activePatterns = nextActivePatterns;
+  }
+
+  return orderedCandidates;
+}
+
 export function shuffle(items) {
   const copy = [...items];
   for (let index = copy.length - 1; index > 0; index -= 1) {

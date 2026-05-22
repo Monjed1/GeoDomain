@@ -8,6 +8,7 @@ import {
   compactObject,
   createDomain,
   isCleanDomainRoot,
+  orderCandidatesByRandomPattern,
   scoreDomainRoot,
   shuffle,
   toDomainToken,
@@ -360,7 +361,7 @@ export async function generateDomains(input) {
   }
 
   let domains = await reserveCandidates({
-    candidates: cachedCandidates,
+    candidates: orderCandidatesByRandomPattern(cachedCandidates, { preserveScore: input.mode === 'targeted' }),
     count: input.count,
     requestContext,
     triedDomains
@@ -374,7 +375,7 @@ export async function generateDomains(input) {
     });
 
     const extraDomains = await reserveCandidates({
-      candidates: shuffle(expandedPool),
+      candidates: orderCandidatesByRandomPattern(expandedPool, { preserveScore: input.mode === 'targeted' }),
       count: input.count - domains.length,
       requestContext,
       triedDomains

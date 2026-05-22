@@ -328,6 +328,8 @@ The generator uses multiple patterns. The `pattern` value in each response tells
 | `ServiceInState` | `{ServiceKeyword}In{State}.com` | `lawyerinflorida.com` |
 | `BrandableGeoRoot` | brand/geo/service hybrid | `brightmiamismile.com` |
 
+Pattern selection is randomized on every generation request. The API groups candidates by pattern, shuffles the pattern order, and pulls from different pattern groups in rounds so one pattern does not dominate the whole response. In `targeted` mode, the pattern order is still randomized, but stronger candidates inside each pattern group are preferred.
+
 Clean-domain rules:
 
 - lowercase only
