@@ -308,23 +308,25 @@ If `API_KEY` is set, `/stats` also requires the bearer token.
 
 ## Domain Generation Logic
 
-The generator uses multiple patterns:
+The generator uses multiple patterns. The `pattern` value in each response tells you which structure created the domain.
 
-- `{City}{Profession}.com`
-- `{Profession}In{City}.com`
-- `{City}{ServiceKeyword}.com`
-- `{ServiceKeyword}{City}.com`
-- `{BrandableGeoRoot}.com`
-
-Examples:
-
-```text
-miamidoctor.com
-doctorinmiami.com
-miamiclinic.com
-clinicmiami.com
-miamivita.com
-```
+| Pattern | Structure | Example |
+| --- | --- | --- |
+| `City+Profession` | `{City}{Profession}.com` | `miamidoctor.com` |
+| `ProfessionInCity` | `{Profession}In{City}.com` | `doctorinmiami.com` |
+| `City+ServiceKeyword` | `{City}{ServiceKeyword}.com` | `miamiclinic.com` |
+| `ServiceKeyword+City` | `{ServiceKeyword}{City}.com` | `clinicmiami.com` |
+| `BestCityService` | `best{City}{ServiceKeyword}.com` | `bestmiamidentist.com` |
+| `TopCityService` | `top{City}{ServiceKeyword}.com` | `topmiamilawyer.com` |
+| `UrgentCityService` | `urgent{City}{ServiceKeyword}.com` | `urgentmiamicare.com` |
+| `CityServicePros` | `{City}{ServiceKeyword}pros.com` | `miamiroofpros.com` |
+| `CityServiceExperts` | `{City}{ServiceKeyword}experts.com` | `miamilegalexperts.com` |
+| `ServiceNearCity` | `{ServiceKeyword}near{City}.com` | `dentistnearmiami.com` |
+| `CityServiceHub` | `{City}{ServiceKeyword}hub.com` | `miamidentalhub.com` |
+| `CityServiceCenter` | `{City}{ServiceKeyword}center.com` | `miamimedicalcenter.com` |
+| `StateService` | `{State}{ServiceKeyword}.com` | `floridadental.com` |
+| `ServiceInState` | `{ServiceKeyword}In{State}.com` | `lawyerinflorida.com` |
+| `BrandableGeoRoot` | brand/geo/service hybrid | `brightmiamismile.com` |
 
 Clean-domain rules:
 

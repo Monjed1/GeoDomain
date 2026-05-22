@@ -75,6 +75,7 @@ function getBrandableCityToken(cityTokens) {
 function buildCandidatesForPair(cityRecord, profile, maxRootLength) {
   const cityTokens = getCityTokenVariants(cityRecord);
   const professionToken = toDomainToken(profile.profession);
+  const stateToken = toDomainToken(cityRecord.state);
   const serviceTerms = expandServiceTerms(profile);
   const brandRoots = expandBrandRoots(profile);
   const brandCity = getBrandableCityToken(cityTokens);
@@ -121,6 +122,122 @@ function buildCandidatesForPair(cityRecord, profile, maxRootLength) {
           profile,
           serviceKeyword: serviceTerm,
           pattern: 'ServiceKeyword+City',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `best${cityToken}${serviceToken}`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'BestCityService',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `top${cityToken}${serviceToken}`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'TopCityService',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `urgent${cityToken}${serviceToken}`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'UrgentCityService',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `${cityToken}${serviceToken}pros`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'CityServicePros',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `${cityToken}${serviceToken}experts`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'CityServiceExperts',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `${serviceToken}near${cityToken}`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'ServiceNearCity',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `${cityToken}${serviceToken}hub`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'CityServiceHub',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `${cityToken}${serviceToken}center`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'CityServiceCenter',
+          maxRootLength
+        })
+      );
+    }
+  }
+
+  if (stateToken) {
+    for (const serviceTerm of serviceTerms) {
+      const serviceToken = toDomainToken(serviceTerm);
+
+      candidates.push(
+        createCandidate({
+          root: `${stateToken}${serviceToken}`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'StateService',
+          maxRootLength
+        })
+      );
+
+      candidates.push(
+        createCandidate({
+          root: `${serviceToken}in${stateToken}`,
+          cityRecord,
+          profile,
+          serviceKeyword: serviceTerm,
+          pattern: 'ServiceInState',
           maxRootLength
         })
       );
