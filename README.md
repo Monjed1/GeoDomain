@@ -380,7 +380,7 @@ Main Redis keys:
 | Key | Type | Purpose |
 | --- | --- | --- |
 | `used_domains` | Set | Global duplicate-prevention set. |
-| `geo:{country}:{city}:{profession}:{mode}:{count}` | String JSON | Cached candidate pool. |
+| `geo:v2:{country}:{city}:{profession}:{mode}:{count}` | String JSON | Cached candidate pool. |
 | `domain:{domain}` | Hash | Metadata for each generated domain. |
 | `generated_domains` | Set | Index of generated domains. |
 | `generated_domains_by_time` | Sorted set | Timeline index. |
@@ -388,7 +388,7 @@ Main Redis keys:
 | `stats:top_professions` | Sorted set | Profession leaderboard. |
 | `stats:top_cities` | Sorted set | City leaderboard. |
 
-Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned.
+Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v2` cache version is used so older cached pools do not lock the API into old pattern behavior after an update.
 
 ## Duplicate Prevention
 

@@ -2,8 +2,10 @@ import { env } from '../config/env.js';
 import { redis } from '../config/redis.js';
 import { cacheSegment } from '../utils/domainUtils.js';
 
+const GEO_CACHE_VERSION = 'v2';
+
 export function buildGeoCacheKey({ country, city, profession, mode, count }) {
-  return `geo:${cacheSegment(country)}:${cacheSegment(city)}:${cacheSegment(profession)}:${mode}:${count}`;
+  return `geo:${GEO_CACHE_VERSION}:${cacheSegment(country)}:${cacheSegment(city)}:${cacheSegment(profession)}:${mode}:${count}`;
 }
 
 export async function getJson(key) {

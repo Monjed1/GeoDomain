@@ -73,6 +73,44 @@ function getBrandableCityToken(cityTokens) {
   return preferred || cityTokens[0];
 }
 
+function createPatternBuckets(candidates, options = {}) {
+  const buckets = new Map();
+  const preserveScore = Boolean(options.preserveScore);
+
+  for (const candidate of candidates) {
+    const pattern = candidate.pattern || 'Unknown';
+    const bucket = buckets.get(pattern) || [];
+    bucket.push(candidate);
+    buckets.set(pattern, bucket);
+  }
+
+  for (const [pattern, bucket] of buckets.entries()) {
+    const orderedBucket = preserveScore
+      ? [...bucket].sort((left, right) => right.score - left.score || left.root.length - right.root.length)
+      : shuffle(bucket);
+    buckets.set(pattern, orderedBucket);
+  }
+
+  return buckets;
+}
+
+function pickRandomPatternBucket(buckets, usedPatternRound) {
+  const activePatterns = [...buckets.entries()]
+    .filter(([, bucket]) => bucket.length > 0)
+    .map(([pattern]) => pattern);
+
+  if (!activePatterns.length) return null;
+
+  let availablePatterns = activePatterns.filter((pattern) => !usedPatternRound.has(pattern));
+
+  if (!availablePatterns.length) {
+    usedPatternRound.clear();
+    availablePatterns = activePatterns;
+  }
+
+  return availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
+}
+
 function buildCandidatesForPair(cityRecord, profile, maxRootLength) {
   const cityTokens = getCityTokenVariants(cityRecord);
   const professionToken = toDomainToken(profile.profession);
@@ -313,17 +351,25 @@ export function createCandidatePool(input, options = {}) {
 
   const uniqueCandidates = uniqueByDomain(candidates);
   const sorted = uniqueCandidates.sort((left, right) => right.score - left.score || left.root.length - right.root.length);
+  const patternBalanced = orderCandidatesByRandomPattern(sorted, { preserveScore: input.mode === 'targeted' });
 
-  return input.mode === 'random' ? shuffle(sorted).slice(0, 1200) : sorted.slice(0, 1200);
+  return patternBalanced.slice(0, 1200);
 }
 
-async function reserveCandidates({ candidates, count, requestContext, triedDomains }) {
+async function reserveCandidates({ candidates, count, requestContext, triedDomains, preserveScore = false }) {
   const reserved = [];
+  const buckets = createPatternBuckets(candidates, { preserveScore });
+  const usedPatternRound = new Set();
   let attempts = 0;
 
-  for (const candidate of candidates) {
+  while (reserved.length < count && attempts < env.DOMAIN_GENERATION_ATTEMPTS) {
+    const pattern = pickRandomPatternBucket(buckets, usedPatternRound);
+    if (!pattern) break;
+
+    const candidate = buckets.get(pattern).shift();
+    usedPatternRound.add(pattern);
+
     if (reserved.length >= count) break;
-    if (attempts >= env.DOMAIN_GENERATION_ATTEMPTS) break;
     attempts += 1;
 
     if (triedDomains.has(candidate.domain)) continue;
@@ -361,10 +407,11 @@ export async function generateDomains(input) {
   }
 
   let domains = await reserveCandidates({
-    candidates: orderCandidatesByRandomPattern(cachedCandidates, { preserveScore: input.mode === 'targeted' }),
+    candidates: cachedCandidates,
     count: input.count,
     requestContext,
-    triedDomains
+    triedDomains,
+    preserveScore: input.mode === 'targeted'
   });
 
   let round = 0;
@@ -375,10 +422,11 @@ export async function generateDomains(input) {
     });
 
     const extraDomains = await reserveCandidates({
-      candidates: orderCandidatesByRandomPattern(expandedPool, { preserveScore: input.mode === 'targeted' }),
+      candidates: expandedPool,
       count: input.count - domains.length,
       requestContext,
-      triedDomains
+      triedDomains,
+      preserveScore: input.mode === 'targeted'
     });
 
     domains = [...domains, ...extraDomains];
