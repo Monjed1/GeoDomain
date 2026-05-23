@@ -270,6 +270,35 @@ Response:
         "cityTier": "large",
         "confidence": "offline_estimate"
       },
+      "leadValue": {
+        "estimatedLeadValueUsd": 520,
+        "leadValueScore": 52,
+        "closeDifficulty": "low",
+        "confidence": "offline_estimate"
+      },
+      "brandability": {
+        "brandabilityScore": 96,
+        "lengthScore": 100,
+        "pronounceableScore": 96,
+        "naturalWordOrderScore": 92,
+        "exactMatchIntentScore": 95,
+        "simplicityScore": 92,
+        "strengths": [
+          "short_domain_root",
+          "pronounceable",
+          "natural_word_order",
+          "exact_match_intent",
+          "simple_letters"
+        ]
+      },
+      "liquidity": {
+        "liquidityScore": 95,
+        "sellSpeed": "fast",
+        "exactMatch": true,
+        "cpcScore": 50,
+        "cityMarketIndex": 78,
+        "confidence": "offline_estimate"
+      },
       "trademarkRisk": {
         "level": "low",
         "flags": []
@@ -343,6 +372,9 @@ The API estimates sale potential without external APIs. Each generated domain ge
 - `salePotential`: `very_high`, `high`, `medium`, or `low`
 - `searchDemand`: estimated local keyword volume and CPC
 - `buyerPool`: estimated number of businesses that could buy the domain
+- `leadValue`: estimated value of one converted customer in that niche
+- `brandability`: score for shortness, pronounceability, natural order, and exact-match intent
+- `liquidity`: estimate of how easy the domain may be to sell quickly
 - `trademarkRisk`: local protected-brand risk check
 - `reasons`: short machine-friendly signals explaining the score
 
@@ -353,6 +385,8 @@ The offline model uses:
 - country CPC multiplier
 - domain pattern intent weight
 - domain length and readability
+- estimated lead value economics
+- exact-match and word-order liquidity factors
 - local protected-brand and high-risk term lists
 
 High trademark-risk domains are rejected before they can be returned or stored. This is a local risk filter, not legal advice or an official trademark clearance.
@@ -442,7 +476,7 @@ Main Redis keys:
 | Key | Type | Purpose |
 | --- | --- | --- |
 | `used_domains` | Set | Global duplicate-prevention set. |
-| `geo:v3:{country}:{city}:{profession}:{mode}:{count}` | String JSON | Cached candidate pool. |
+| `geo:v4:{country}:{city}:{profession}:{mode}:{count}` | String JSON | Cached candidate pool. |
 | `domain:{domain}` | Hash | Metadata for each generated domain. |
 | `generated_domains` | Set | Index of generated domains. |
 | `generated_domains_by_time` | Sorted set | Timeline index. |
@@ -450,7 +484,7 @@ Main Redis keys:
 | `stats:top_professions` | Sorted set | Profession leaderboard. |
 | `stats:top_cities` | Sorted set | City leaderboard. |
 
-Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v3` cache version is used so older cached pools do not lock the API into old pattern or scoring behavior after an update.
+Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v4` cache version is used so older cached pools do not lock the API into old pattern or scoring behavior after an update.
 
 ## Duplicate Prevention
 

@@ -467,6 +467,9 @@ export async function generateDomains(input) {
     reasons: candidate.reasons,
     searchDemand: candidate.searchDemand,
     buyerPool: candidate.buyerPool,
+    leadValue: candidate.leadValue,
+    brandability: candidate.brandability,
+    liquidity: candidate.liquidity,
     trademarkRisk: {
       level: candidate.trademarkRisk.level,
       flags: candidate.trademarkRisk.flags

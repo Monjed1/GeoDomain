@@ -1,4 +1,4 @@
-export const SCORING_VERSION = 'offline-v1';
+export const SCORING_VERSION = 'offline-v2';
 
 export const PATTERN_INTENT_WEIGHTS = {
   'City+Profession': 94,
@@ -37,6 +37,7 @@ export const MARKET_SEGMENTS = [
     ],
     baseMonthlyVolume: 760,
     baseCpcUsd: 46,
+    leadValueUsd: 1200,
     buyerDensity: 8.8,
     urgency: 94,
     saleValue: 96
@@ -46,6 +47,7 @@ export const MARKET_SEGMENTS = [
     terms: ['dentist', 'dental', 'orthodontist', 'implants', 'smile', 'teeth', 'oral'],
     baseMonthlyVolume: 700,
     baseCpcUsd: 19,
+    leadValueUsd: 650,
     buyerDensity: 7.4,
     urgency: 83,
     saleValue: 90
@@ -74,6 +76,7 @@ export const MARKET_SEGMENTS = [
     ],
     baseMonthlyVolume: 620,
     baseCpcUsd: 17,
+    leadValueUsd: 520,
     buyerDensity: 6.2,
     urgency: 86,
     saleValue: 88
@@ -107,6 +110,7 @@ export const MARKET_SEGMENTS = [
     ],
     baseMonthlyVolume: 580,
     baseCpcUsd: 23,
+    leadValueUsd: 720,
     buyerDensity: 7.1,
     urgency: 89,
     saleValue: 91
@@ -116,6 +120,7 @@ export const MARKET_SEGMENTS = [
     terms: ['realtor', 'realty', 'estate', 'broker', 'property', 'mortgage', 'homes', 'inspection'],
     baseMonthlyVolume: 520,
     baseCpcUsd: 13,
+    leadValueUsd: 900,
     buyerDensity: 5.8,
     urgency: 72,
     saleValue: 84
@@ -125,6 +130,7 @@ export const MARKET_SEGMENTS = [
     terms: ['mechanic', 'auto', 'car', 'body', 'dealer', 'tire', 'towing', 'wash', 'garage', 'collision'],
     baseMonthlyVolume: 500,
     baseCpcUsd: 9,
+    leadValueUsd: 240,
     buyerDensity: 6.4,
     urgency: 82,
     saleValue: 79
@@ -134,6 +140,7 @@ export const MARKET_SEGMENTS = [
     terms: ['accountant', 'cpa', 'bookkeeper', 'financial', 'insurance', 'tax', 'payroll', 'wealth'],
     baseMonthlyVolume: 430,
     baseCpcUsd: 18,
+    leadValueUsd: 420,
     buyerDensity: 4.4,
     urgency: 67,
     saleValue: 82
@@ -143,6 +150,7 @@ export const MARKET_SEGMENTS = [
     terms: ['barber', 'hair', 'makeup', 'nail', 'salon', 'esthetician', 'tattoo', 'spa', 'beauty'],
     baseMonthlyVolume: 460,
     baseCpcUsd: 5,
+    leadValueUsd: 120,
     buyerDensity: 6.7,
     urgency: 54,
     saleValue: 70
@@ -168,6 +176,7 @@ export const MARKET_SEGMENTS = [
     ],
     baseMonthlyVolume: 380,
     baseCpcUsd: 21,
+    leadValueUsd: 900,
     buyerDensity: 3.7,
     urgency: 63,
     saleValue: 83
@@ -177,6 +186,7 @@ export const MARKET_SEGMENTS = [
     terms: ['photographer', 'wedding', 'planner', 'music', 'artist', 'studio', 'floral', 'event'],
     baseMonthlyVolume: 360,
     baseCpcUsd: 6,
+    leadValueUsd: 220,
     buyerDensity: 4.7,
     urgency: 55,
     saleValue: 68
@@ -186,6 +196,7 @@ export const MARKET_SEGMENTS = [
     terms: ['tutor', 'school', 'teacher', 'coach', 'trainer', 'fitness', 'gym', 'driving', 'lessons'],
     baseMonthlyVolume: 340,
     baseCpcUsd: 5,
+    leadValueUsd: 140,
     buyerDensity: 4.1,
     urgency: 49,
     saleValue: 65
@@ -195,6 +206,7 @@ export const MARKET_SEGMENTS = [
     terms: ['restaurant', 'bakery', 'cafe', 'coffee', 'caterer', 'chef', 'food', 'truck'],
     baseMonthlyVolume: 680,
     baseCpcUsd: 3,
+    leadValueUsd: 90,
     buyerDensity: 9.2,
     urgency: 42,
     saleValue: 62
@@ -204,10 +216,40 @@ export const MARKET_SEGMENTS = [
     terms: [],
     baseMonthlyVolume: 240,
     baseCpcUsd: 6,
+    leadValueUsd: 160,
     buyerDensity: 3.2,
     urgency: 45,
     saleValue: 58
   }
+];
+
+export const LEAD_VALUE_OVERRIDES = [
+  { terms: ['injury', 'accident', 'personalinjury'], estimatedLeadValueUsd: 3500, closeDifficulty: 'high' },
+  { terms: ['roof', 'roofer', 'roofing'], estimatedLeadValueUsd: 2000, closeDifficulty: 'medium' },
+  { terms: ['solar'], estimatedLeadValueUsd: 1800, closeDifficulty: 'medium' },
+  { terms: ['pool', 'poolbuilder'], estimatedLeadValueUsd: 1700, closeDifficulty: 'medium' },
+  { terms: ['concrete', 'foundation'], estimatedLeadValueUsd: 1400, closeDifficulty: 'medium' },
+  { terms: ['hvac', 'heating', 'cooling'], estimatedLeadValueUsd: 950, closeDifficulty: 'medium' },
+  { terms: ['mortgage', 'realestate', 'realty', 'realtor'], estimatedLeadValueUsd: 900, closeDifficulty: 'medium' },
+  { terms: ['divorce', 'criminal', 'immigration', 'bankruptcy', 'estateplanning'], estimatedLeadValueUsd: 850, closeDifficulty: 'medium' },
+  { terms: ['plumber', 'plumbing'], estimatedLeadValueUsd: 550, closeDifficulty: 'low' },
+  { terms: ['dentalimplants', 'implants'], estimatedLeadValueUsd: 1200, closeDifficulty: 'medium' },
+  { terms: ['dentist', 'orthodontist', 'dental'], estimatedLeadValueUsd: 650, closeDifficulty: 'low' },
+  { terms: ['urgentcare', 'painclinic', 'medspa'], estimatedLeadValueUsd: 500, closeDifficulty: 'medium' },
+  { terms: ['appdeveloper', 'software', 'saas', 'automation', 'aiagency', 'aiconsultant'], estimatedLeadValueUsd: 1100, closeDifficulty: 'high' },
+  { terms: ['seo', 'leadgeneration', 'marketingagency'], estimatedLeadValueUsd: 700, closeDifficulty: 'medium' },
+  { terms: ['towing', 'locksmith'], estimatedLeadValueUsd: 220, closeDifficulty: 'low' },
+  { terms: ['barber', 'hairstylist', 'nailsalon', 'carwash', 'cafe', 'bakery'], estimatedLeadValueUsd: 90, closeDifficulty: 'low' }
+];
+
+export const EXACT_INTENT_PATTERNS = [
+  'City+Profession',
+  'City+ServiceKeyword',
+  'ServiceKeyword+City',
+  'ServiceNearCity',
+  'BestCityService',
+  'StateService',
+  'ServiceInState'
 ];
 
 export const CITY_MARKET_TIERS = {

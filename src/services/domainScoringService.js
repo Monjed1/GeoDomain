@@ -1,7 +1,9 @@
 import {
   CITY_MARKET_TIERS,
   COUNTRY_CPC_MULTIPLIERS,
+  EXACT_INTENT_PATTERNS,
   HIGH_RISK_DOMAIN_TERMS,
+  LEAD_VALUE_OVERRIDES,
   MARKET_SEGMENTS,
   PATTERN_INTENT_WEIGHTS,
   PROTECTED_BRAND_TERMS,
@@ -76,6 +78,115 @@ function getPhraseQuality(candidate) {
   return clamp(Math.round(lengthScore * 0.35 + vowelScore * 0.15 + patternScore * 0.5 + exactLocalBonus));
 }
 
+function countSyllableLikeGroups(root) {
+  const matches = root.match(/[aeiouy]+/g);
+  return matches ? matches.length : 0;
+}
+
+function hasNaturalWordOrder(candidate) {
+  return [
+    'City+Profession',
+    'City+ServiceKeyword',
+    'BestCityService',
+    'TopCityService',
+    'UrgentCityService',
+    'CityServicePros',
+    'CityServiceExperts',
+    'CityServiceHub',
+    'CityServiceCenter',
+    'StateService',
+    'BrandableGeoRoot'
+  ].includes(candidate.pattern);
+}
+
+function getLeadValueSignal(candidate, segment) {
+  const text = tokenText(candidate);
+  const override = LEAD_VALUE_OVERRIDES.find((entry) => entry.terms.some((term) => text.includes(toDomainToken(term))));
+  const estimatedLeadValueUsd = override?.estimatedLeadValueUsd || segment.leadValueUsd;
+  const leadValueScore = clamp(
+    Math.round(
+      Math.min(estimatedLeadValueUsd / 15, 75) +
+        Math.min(segment.urgency / 5, 20) +
+        (estimatedLeadValueUsd >= 1000 ? 5 : 0)
+    )
+  );
+
+  return {
+    estimatedLeadValueUsd,
+    leadValueScore,
+    closeDifficulty: override?.closeDifficulty || (estimatedLeadValueUsd >= 900 ? 'medium' : 'low'),
+    confidence: 'offline_estimate'
+  };
+}
+
+function getBrandabilityScore(candidate, phraseQualityScore, patternIntent) {
+  const root = candidate.root;
+  const lengthScore = root.length <= 12 ? 100 : root.length <= 16 ? 92 : root.length <= 20 ? 78 : root.length <= 24 ? 58 : 38;
+  const syllableGroups = countSyllableLikeGroups(root);
+  const pronounceableScore = clamp(hasVowel(root) ? 72 + Math.min(syllableGroups * 7, 24) : 28);
+  const naturalOrderScore = hasNaturalWordOrder(candidate) ? 92 : 74;
+  const exactIntentScore = EXACT_INTENT_PATTERNS.includes(candidate.pattern) ? 95 : candidate.pattern === 'BrandableGeoRoot' ? 72 : 82;
+  const simplicityScore = /[qxz]{2,}|[bcdfghjklmnpqrstvwxz]{5,}/.test(root) ? 58 : 92;
+  const score = clamp(
+    Math.round(
+      lengthScore * 0.24 +
+        pronounceableScore * 0.18 +
+        naturalOrderScore * 0.2 +
+        exactIntentScore * 0.24 +
+        simplicityScore * 0.1 +
+        phraseQualityScore * 0.04
+    )
+  );
+  const strengths = [];
+
+  if (lengthScore >= 90) strengths.push('short_domain_root');
+  if (pronounceableScore >= 85) strengths.push('pronounceable');
+  if (naturalOrderScore >= 90) strengths.push('natural_word_order');
+  if (exactIntentScore >= 90) strengths.push('exact_match_intent');
+  if (simplicityScore >= 90) strengths.push('simple_letters');
+
+  return {
+    brandabilityScore: score,
+    lengthScore,
+    pronounceableScore,
+    naturalWordOrderScore: naturalOrderScore,
+    exactMatchIntentScore: exactIntentScore,
+    simplicityScore,
+    strengths
+  };
+}
+
+function getLiquidityScore({ candidate, demandScore, buyerPoolScore, brandability, leadValue, estimatedCpcUsd, citySignal }) {
+  const exactMatchBoost = EXACT_INTENT_PATTERNS.includes(candidate.pattern) ? 8 : 0;
+  const cityBoost = citySignal.marketIndex >= 75 ? 7 : citySignal.marketIndex >= 60 ? 4 : 0;
+  const cpcScore = clamp(Math.round(Math.min(estimatedCpcUsd * 2.4, 100)));
+  const leadLiquidityPenalty = leadValue.closeDifficulty === 'high' ? 5 : leadValue.closeDifficulty === 'medium' ? 2 : 0;
+  const liquidityScore = clamp(
+    Math.round(
+      demandScore * 0.22 +
+        buyerPoolScore * 0.24 +
+        brandability.brandabilityScore * 0.24 +
+        cpcScore * 0.12 +
+        citySignal.marketIndex * 0.1 +
+        leadValue.leadValueScore * 0.08 +
+        exactMatchBoost +
+        cityBoost -
+        leadLiquidityPenalty
+    )
+  );
+  const sellSpeed =
+    liquidityScore >= 86 ? 'fast' : liquidityScore >= 72 ? 'moderate_fast' : liquidityScore >= 58 ? 'moderate' : 'slow';
+
+  return {
+    liquidityScore,
+    sellSpeed,
+    exactMatch: EXACT_INTENT_PATTERNS.includes(candidate.pattern),
+    cpcScore,
+    cityMarketIndex: citySignal.marketIndex,
+    confidence: 'offline_estimate'
+  };
+}
+
 export function evaluateTrademarkRisk(candidate) {
   const root = toDomainToken(candidate.root || candidate.domain || '');
   const flags = [];
@@ -134,13 +245,26 @@ export function evaluateDomainOpportunity(candidate) {
     )
   );
   const buyerPoolScore = clamp(Math.round(Math.min(estimatedBuyerPool / 7, 78) + Math.min(segment.buyerDensity * 2.2, 22)));
+  const leadValue = getLeadValueSignal(candidate, segment);
+  const brandability = getBrandabilityScore(candidate, phraseQualityScore, patternIntent);
+  const liquidity = getLiquidityScore({
+    candidate,
+    demandScore,
+    buyerPoolScore,
+    brandability,
+    leadValue,
+    estimatedCpcUsd,
+    citySignal
+  });
   const domainPowerScore = clamp(
     Math.round(
-      demandScore * 0.34 +
-        buyerPoolScore * 0.24 +
-        phraseQualityScore * 0.24 +
-        segment.saleValue * 0.12 +
-        patternIntent * 0.06 -
+      demandScore * 0.23 +
+        buyerPoolScore * 0.18 +
+        brandability.brandabilityScore * 0.17 +
+        liquidity.liquidityScore * 0.16 +
+        leadValue.leadValueScore * 0.14 +
+        segment.saleValue * 0.08 +
+        patternIntent * 0.04 -
         trademarkRisk.scorePenalty
     )
   );
@@ -151,6 +275,9 @@ export function evaluateDomainOpportunity(candidate) {
   if (estimatedCpcUsd >= 20) reasons.push('high_estimated_cpc');
   if (estimatedMonthlySearchVolume >= 700) reasons.push('strong_estimated_search_demand');
   if (estimatedBuyerPool >= 300) reasons.push('large_estimated_buyer_pool');
+  if (leadValue.leadValueScore >= 80) reasons.push('high_estimated_lead_value');
+  if (brandability.brandabilityScore >= 85) reasons.push('strong_brandability');
+  if (liquidity.liquidityScore >= 80) reasons.push('high_liquidity');
   if (patternIntent >= 88) reasons.push('high_intent_domain_pattern');
   if (phraseQualityScore >= 85) reasons.push('clean_readable_domain');
   if (trademarkRisk.level === 'low') reasons.push('low_trademark_risk');
@@ -174,6 +301,9 @@ export function evaluateDomainOpportunity(candidate) {
       cityTier: citySignal.cityTier,
       confidence: 'offline_estimate'
     },
+    leadValue,
+    brandability,
+    liquidity,
     trademarkRisk
   };
 }

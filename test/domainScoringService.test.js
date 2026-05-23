@@ -25,7 +25,42 @@ test('offline scoring rates high-intent local legal domains strongly', () => {
   assert.ok(score.domainPowerScore >= 75);
   assert.ok(score.searchDemand.estimatedCpcUsd >= 20);
   assert.ok(score.buyerPool.estimatedBusinesses >= 300);
+  assert.ok(score.leadValue.estimatedLeadValueUsd >= 800);
+  assert.ok(score.leadValue.leadValueScore >= 70);
+  assert.ok(score.brandability.brandabilityScore >= 75);
+  assert.ok(score.liquidity.liquidityScore >= 70);
   assert.ok(['high', 'very_high'].includes(score.salePotential));
+});
+
+test('lead value scoring rewards very high value injury lawyer leads', () => {
+  const score = evaluateDomainOpportunity(
+    candidate({
+      root: 'miamiinjurylawyer',
+      domain: 'miamiinjurylawyer.com',
+      profession: 'personal injury lawyer',
+      serviceKeyword: 'injury'
+    })
+  );
+
+  assert.equal(score.leadValue.estimatedLeadValueUsd, 3500);
+  assert.ok(score.leadValue.leadValueScore >= 90);
+  assert.ok(score.reasons.includes('high_estimated_lead_value'));
+});
+
+test('brandability rewards short exact-match natural domains', () => {
+  const shortExact = evaluateDomainOpportunity(candidate({ root: 'miamidentist', domain: 'miamidentist.com', profession: 'dentist', serviceKeyword: 'dentist' }));
+  const longBrandable = evaluateDomainOpportunity(
+    candidate({
+      root: 'brightlocalmiamidentalexperts',
+      domain: 'brightlocalmiamidentalexperts.com',
+      profession: 'dentist',
+      serviceKeyword: 'dental',
+      pattern: 'BrandableGeoRoot'
+    })
+  );
+
+  assert.ok(shortExact.brandability.brandabilityScore > longBrandable.brandability.brandabilityScore);
+  assert.ok(shortExact.liquidity.liquidityScore >= longBrandable.liquidity.liquidityScore);
 });
 
 test('trademark risk blocks protected brand terms', () => {
