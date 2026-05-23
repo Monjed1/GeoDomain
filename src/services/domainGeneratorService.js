@@ -8,6 +8,7 @@ import {
   compactObject,
   createDomain,
   isCleanDomainRoot,
+  normalizeHumanText,
   orderCandidatesByRandomPattern,
   scoreDomainRoot,
   shuffle,
@@ -16,6 +17,7 @@ import {
 } from '../utils/domainUtils.js';
 import { buildGeoCacheKey, getOrSetJson } from './cacheService.js';
 import { getCityTokenVariants, resolveCities } from './cityService.js';
+import { evaluateDomainOpportunity } from './domainScoringService.js';
 import { releaseDomain, reserveDomain } from './duplicateService.js';
 
 const BRAND_PREFIXES = [
@@ -55,16 +57,28 @@ function createCandidate({ root, cityRecord, profile, serviceKeyword, pattern, m
   const cleanRoot = toDomainToken(root);
   if (!isCleanDomainRoot(cleanRoot, maxRootLength)) return null;
 
-  return {
+  const baseScore = scoreDomainRoot(cleanRoot, pattern);
+  const candidate = {
     root: cleanRoot,
     domain: createDomain(cleanRoot),
     city: cityRecord.city || '',
     state: cityRecord.state || '',
     country: cityRecord.country || '',
     profession: profile.profession,
-    serviceKeyword: serviceKeyword ? toDomainToken(serviceKeyword) : '',
+    serviceKeyword: serviceKeyword ? normalizeHumanText(serviceKeyword).toLowerCase() : '',
     pattern,
-    score: scoreDomainRoot(cleanRoot, pattern)
+    baseScore
+  };
+  const opportunity = evaluateDomainOpportunity(candidate);
+
+  if (opportunity.trademarkRisk.blocked) {
+    return null;
+  }
+
+  return {
+    ...candidate,
+    ...opportunity,
+    score: baseScore + opportunity.domainPowerScore
   };
 }
 
@@ -447,7 +461,16 @@ export async function generateDomains(input) {
     state: candidate.state,
     country: candidate.country,
     profession: candidate.profession,
-    pattern: candidate.pattern
+    pattern: candidate.pattern,
+    domainPowerScore: candidate.domainPowerScore,
+    salePotential: candidate.salePotential,
+    reasons: candidate.reasons,
+    searchDemand: candidate.searchDemand,
+    buyerPool: candidate.buyerPool,
+    trademarkRisk: {
+      level: candidate.trademarkRisk.level,
+      flags: candidate.trademarkRisk.flags
+    }
   }));
 }
 

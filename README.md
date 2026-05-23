@@ -246,7 +246,34 @@ Response:
       "state": "Florida",
       "country": "United States",
       "profession": "doctor",
-      "pattern": "City+Profession"
+      "pattern": "City+Profession",
+      "domainPowerScore": 82,
+      "salePotential": "high",
+      "reasons": [
+        "strong_estimated_search_demand",
+        "large_estimated_buyer_pool",
+        "high_intent_domain_pattern",
+        "clean_readable_domain",
+        "low_trademark_risk"
+      ],
+      "searchDemand": {
+        "keyword": "miami doctor",
+        "estimatedMonthlySearchVolume": 806,
+        "estimatedCpcUsd": 18.21,
+        "demandScore": 89,
+        "marketSegment": "medical",
+        "confidence": "offline_estimate"
+      },
+      "buyerPool": {
+        "estimatedBusinesses": 484,
+        "buyerPoolScore": 82,
+        "cityTier": "large",
+        "confidence": "offline_estimate"
+      },
+      "trademarkRisk": {
+        "level": "low",
+        "flags": []
+      }
     },
     {
       "domain": "doctorinmiami.com",
@@ -269,6 +296,8 @@ Response:
 ```
 
 The response count can be lower than requested only when the exact request has too few unused candidates left. If no unused domains are available, the API returns `409`.
+
+Every returned domain includes offline opportunity scoring. The API does not call Google, USPTO, DataForSEO, or any external provider. Scores are estimated from built-in commercial-intent, city-market, buyer-density, pattern-quality, and protected-brand rules.
 
 ### `GET /stats`
 
@@ -305,6 +334,28 @@ Response:
 ```
 
 If `API_KEY` is set, `/stats` also requires the bearer token.
+
+## Offline Opportunity Scoring
+
+The API estimates sale potential without external APIs. Each generated domain gets:
+
+- `domainPowerScore`: overall score from `0` to `100`
+- `salePotential`: `very_high`, `high`, `medium`, or `low`
+- `searchDemand`: estimated local keyword volume and CPC
+- `buyerPool`: estimated number of businesses that could buy the domain
+- `trademarkRisk`: local protected-brand risk check
+- `reasons`: short machine-friendly signals explaining the score
+
+The offline model uses:
+
+- profession category value, such as legal, dental, medical, home services, auto, real estate, finance, tech, food, and beauty
+- city market tier, such as mega, large, medium, local, or broad
+- country CPC multiplier
+- domain pattern intent weight
+- domain length and readability
+- local protected-brand and high-risk term lists
+
+High trademark-risk domains are rejected before they can be returned or stored. This is a local risk filter, not legal advice or an official trademark clearance.
 
 ## Domain Generation Logic
 
@@ -391,7 +442,7 @@ Main Redis keys:
 | Key | Type | Purpose |
 | --- | --- | --- |
 | `used_domains` | Set | Global duplicate-prevention set. |
-| `geo:v2:{country}:{city}:{profession}:{mode}:{count}` | String JSON | Cached candidate pool. |
+| `geo:v3:{country}:{city}:{profession}:{mode}:{count}` | String JSON | Cached candidate pool. |
 | `domain:{domain}` | Hash | Metadata for each generated domain. |
 | `generated_domains` | Set | Index of generated domains. |
 | `generated_domains_by_time` | Sorted set | Timeline index. |
@@ -399,7 +450,7 @@ Main Redis keys:
 | `stats:top_professions` | Sorted set | Profession leaderboard. |
 | `stats:top_cities` | Sorted set | City leaderboard. |
 
-Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v2` cache version is used so older cached pools do not lock the API into old pattern behavior after an update.
+Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v3` cache version is used so older cached pools do not lock the API into old pattern or scoring behavior after an update.
 
 ## Duplicate Prevention
 
