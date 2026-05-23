@@ -31,6 +31,7 @@ export const generatePremiumDomainsController = asyncHandler(async (request, res
     success: true,
     premium: true,
     count: result.domains.length,
+    selectedMarketSegment: result.selectedMarketSegment,
     candidatePoolSize: result.candidatePoolSize,
     filters: result.filters,
     domains: result.domains

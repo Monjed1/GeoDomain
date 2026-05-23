@@ -15,6 +15,7 @@ const baseGenerateShape = {
     state: optionalCleanString,
     State: optionalCleanString,
     profession: optionalCleanString,
+    marketSegment: optionalCleanString,
     mode: z.enum(['random', 'targeted']).default('random'),
     count: z.coerce.number().int().min(1).max(env.MAX_GENERATE_COUNT).default(env.MAX_GENERATE_COUNT)
 };
@@ -25,6 +26,7 @@ function normalizeGenerateData(data) {
     city: data.city,
     state: data.state || data.State,
     profession: data.profession,
+    marketSegment: data.marketSegment,
     mode: data.mode,
     count: data.count
   };

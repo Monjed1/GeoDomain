@@ -1,7 +1,14 @@
 import assert from 'node:assert/strict';
 import test from 'node:test';
 
-import { expandServiceTerms, PROFESSION_PROFILES, resolveProfessionProfile } from '../src/data/professionServices.js';
+import {
+  expandServiceTerms,
+  PROFESSION_PROFILES,
+  getProfessionProfilesByMarketSegment,
+  getRandomMarketSegmentKey,
+  getSupportedMarketSegments,
+  resolveProfessionProfile
+} from '../src/data/professionServices.js';
 
 test('resolves required doctor mapping from aliases', () => {
   const profile = resolveProfessionProfile('physician');
@@ -146,4 +153,23 @@ test('resolves requested profession list to built-in profiles', () => {
     const profile = resolveProfessionProfile(profession);
     assert.ok(PROFESSION_PROFILES.includes(profile), `${profession} should resolve to a built-in profile`);
   }
+});
+
+test('selects built-in profession profiles by market segment', () => {
+  const legalProfiles = getProfessionProfilesByMarketSegment('legal', 8);
+  const homeServiceProfiles = getProfessionProfilesByMarketSegment('home_services', 8);
+
+  assert.ok(legalProfiles.length > 0);
+  assert.ok(homeServiceProfiles.length > 0);
+  assert.ok(legalProfiles.every((profile) => PROFESSION_PROFILES.includes(profile)));
+  assert.ok(homeServiceProfiles.every((profile) => PROFESSION_PROFILES.includes(profile)));
+  assert.ok(legalProfiles.some((profile) => /law|lawyer|attorney|legal/i.test(profile.profession)));
+});
+
+test('random market segment selector returns supported segments', () => {
+  const supportedSegments = getSupportedMarketSegments();
+  const selectedSegments = Array.from({ length: 5 }, () => getRandomMarketSegmentKey());
+
+  assert.ok(supportedSegments.includes(selectedSegments[0]));
+  assert.ok(selectedSegments.every((segment) => supportedSegments.includes(segment)));
 });

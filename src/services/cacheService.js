@@ -2,10 +2,11 @@ import { env } from '../config/env.js';
 import { redis } from '../config/redis.js';
 import { cacheSegment } from '../utils/domainUtils.js';
 
-const GEO_CACHE_VERSION = 'v4';
+const GEO_CACHE_VERSION = 'v5';
 
-export function buildGeoCacheKey({ country, city, profession, mode, count }) {
-  return `geo:${GEO_CACHE_VERSION}:${cacheSegment(country)}:${cacheSegment(city)}:${cacheSegment(profession)}:${mode}:${count}`;
+export function buildGeoCacheKey({ country, city, profession, selectedMarketSegment, marketSegment, mode, count }) {
+  const segment = selectedMarketSegment || marketSegment || 'all';
+  return `geo:${GEO_CACHE_VERSION}:${cacheSegment(country)}:${cacheSegment(city)}:${cacheSegment(profession)}:${cacheSegment(segment)}:${mode}:${count}`;
 }
 
 export async function getJson(key) {

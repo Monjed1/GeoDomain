@@ -21,6 +21,7 @@ function cleanMetadata(candidate, requestContext) {
     profession: candidate.profession || '',
     serviceKeyword: candidate.serviceKeyword || '',
     pattern: candidate.pattern,
+    selectedMarketSegment: candidate.selectedMarketSegment || '',
     domainPowerScore: candidate.domainPowerScore ?? '',
     salePotential: candidate.salePotential || '',
     estimatedSearchKeyword: candidate.searchDemand?.keyword || '',

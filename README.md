@@ -220,7 +220,8 @@ Field rules:
 | `State` | No | string | Uppercase `State` is supported as requested. |
 | `state` | No | string | Lowercase `state` is also supported. |
 | `city` | No | string | If missing, random cities are selected from built-in data. |
-| `profession` | No | string | If missing, random profession profiles are selected. |
+| `profession` | No | string | If missing, the API picks one random market segment for the request, then selects professions from that segment. |
+| `marketSegment` | No | string | Optional segment such as `legal`, `dental`, `medical`, `home_services`, `auto`, `finance`, `marketing_tech`, or `food_local`. Used only when `profession` is missing. |
 | `mode` | No | `random` or `targeted` | Defaults to `random`. |
 | `count` | No | number | Defaults to `10`; max controlled by `MAX_GENERATE_COUNT`. |
 
@@ -247,6 +248,7 @@ Response:
       "country": "United States",
       "profession": "doctor",
       "pattern": "City+Profession",
+      "selectedMarketSegment": "medical",
       "domainPowerScore": 82,
       "salePotential": "high",
       "reasons": [
@@ -378,6 +380,7 @@ Example response:
       "country": "United States",
       "profession": "personal injury lawyer",
       "pattern": "City+Profession",
+      "selectedMarketSegment": "legal",
       "premiumScore": 95,
       "domainPowerScore": 94,
       "salePotential": "very_high",
@@ -476,6 +479,41 @@ The offline model uses:
 - local protected-brand and high-risk term lists
 
 High trademark-risk domains are rejected before they can be returned or stored. This is a local risk filter, not legal advice or an official trademark clearance.
+
+### Random Market Segment Selection
+
+If `profession` is missing, the API chooses one random market segment for that request and generates domains only from professions in that segment. This keeps each no-profession request focused while still producing variety across repeated n8n runs.
+
+Examples of supported market segments:
+
+```text
+legal
+dental
+medical
+home_services
+real_estate
+auto
+finance
+beauty
+marketing_tech
+events_creative
+education_fitness
+food_local
+```
+
+You can also force a specific segment by sending `marketSegment` and leaving `profession` empty:
+
+```json
+{
+  "country": "United States",
+  "city": "Miami",
+  "marketSegment": "home_services",
+  "mode": "targeted",
+  "count": 10
+}
+```
+
+If `profession` is provided, the API does not randomize the market segment. It uses the real segment detected from that profession so scoring stays accurate.
 
 ### Score Interpretation Guide
 
@@ -796,7 +834,7 @@ Main Redis keys:
 | Key | Type | Purpose |
 | --- | --- | --- |
 | `used_domains` | Set | Global duplicate-prevention set. |
-| `geo:v4:{country}:{city}:{profession}:{mode}:{count}` | String JSON | Cached candidate pool. |
+| `geo:v5:{country}:{city}:{profession}:{marketSegment}:{mode}:{count}` | String JSON | Cached candidate pool. |
 | `domain:{domain}` | Hash | Metadata for each generated domain. |
 | `generated_domains` | Set | Index of generated domains. |
 | `generated_domains_by_time` | Sorted set | Timeline index. |
@@ -804,7 +842,7 @@ Main Redis keys:
 | `stats:top_professions` | Sorted set | Profession leaderboard. |
 | `stats:top_cities` | Sorted set | City leaderboard. |
 
-Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v4` cache version is used so older cached pools do not lock the API into old pattern or scoring behavior after an update.
+Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v5` cache version includes the selected market segment so random segment requests do not keep reusing one old cached segment.
 
 ## Duplicate Prevention
 

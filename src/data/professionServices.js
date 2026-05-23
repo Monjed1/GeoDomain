@@ -1,3 +1,4 @@
+import { MARKET_SEGMENTS } from './marketSignals.js';
 import { normalizeHumanText, sample, toDomainToken } from '../utils/domainUtils.js';
 
 export const PROFESSION_PROFILES = [
@@ -865,6 +866,7 @@ const GENERIC_SERVICE_TERMS = [
 ];
 
 const lookup = new Map();
+let lastRandomMarketSegmentKey = '';
 
 for (const profile of PROFESSION_PROFILES) {
   const terms = [profile.profession, ...profile.aliases];
@@ -946,6 +948,44 @@ export function resolveProfessionProfile(profession) {
 
 export function getRandomProfessionProfiles(count = 12) {
   return sample(PROFESSION_PROFILES, Math.min(count, PROFESSION_PROFILES.length));
+}
+
+export function getSupportedMarketSegments() {
+  return MARKET_SEGMENTS.filter((segment) => segment.key !== 'default_local').map((segment) => segment.key);
+}
+
+export function getRandomMarketSegmentKey() {
+  const segmentKeys = getSupportedMarketSegments();
+  const availableKeys = segmentKeys.length > 1 ? segmentKeys.filter((key) => key !== lastRandomMarketSegmentKey) : segmentKeys;
+  const selectedKey = sample(availableKeys, 1)[0] || segmentKeys[0] || 'default_local';
+  lastRandomMarketSegmentKey = selectedKey;
+  return selectedKey;
+}
+
+export function getProfessionProfilesByMarketSegment(marketSegmentKey, count = 12) {
+  const segment = MARKET_SEGMENTS.find((item) => item.key === marketSegmentKey);
+  if (!segment || segment.key === 'default_local') {
+    return getRandomProfessionProfiles(count);
+  }
+
+  const segmentTerms = segment.terms.map((term) => toDomainToken(term)).filter(Boolean);
+  const matchingProfiles = PROFESSION_PROFILES.filter((profile) => {
+    const profileTerms = [
+      profile.profession,
+      ...(profile.aliases || []),
+      ...(profile.services || []),
+      ...(profile.brandRoots || [])
+    ]
+      .map((term) => toDomainToken(term))
+      .filter(Boolean);
+
+    return segmentTerms.some((segmentTerm) =>
+      profileTerms.some((profileTerm) => profileTerm === segmentTerm || (segmentTerm.length >= 4 && profileTerm.includes(segmentTerm)))
+    );
+  });
+
+  const pool = matchingProfiles.length ? matchingProfiles : PROFESSION_PROFILES;
+  return sample(pool, Math.min(count, pool.length));
 }
 
 export function expandServiceTerms(profile) {

@@ -1,7 +1,16 @@
 import crypto from 'node:crypto';
 
 import { env } from '../config/env.js';
-import { PROFESSION_PROFILES, expandBrandRoots, expandServiceTerms, getRandomProfessionProfiles, resolveProfessionProfile } from '../data/professionServices.js';
+import {
+  PROFESSION_PROFILES,
+  expandBrandRoots,
+  expandServiceTerms,
+  getProfessionProfilesByMarketSegment,
+  getRandomMarketSegmentKey,
+  getRandomProfessionProfiles,
+  getSupportedMarketSegments,
+  resolveProfessionProfile
+} from '../data/professionServices.js';
 import { saveGeneratedDomain } from '../repositories/domainRepository.js';
 import { ApiError } from '../utils/errors.js';
 import {
@@ -46,11 +55,34 @@ function createRequestHash(input) {
   return crypto.createHash('sha256').update(JSON.stringify(compactObject(input))).digest('hex');
 }
 
+function resolveMarketSegment(input) {
+  if (input.profession) return undefined;
+
+  const supportedSegments = getSupportedMarketSegments();
+  const requestedSegment = toDomainToken(input.marketSegment || '');
+  const matchedSegment = supportedSegments.find((segment) => toDomainToken(segment) === requestedSegment);
+
+  return matchedSegment || getRandomMarketSegmentKey();
+}
+
+function withSelectedMarketSegment(input) {
+  if (input.profession) {
+    return { ...input, marketSegment: undefined, selectedMarketSegment: undefined };
+  }
+
+  const selectedMarketSegment = resolveMarketSegment(input);
+  return selectedMarketSegment ? { ...input, selectedMarketSegment } : input;
+}
+
 function getProfessionProfiles(input) {
   const resolved = resolveProfessionProfile(input.profession);
   if (resolved) return [resolved];
 
   const randomCount = input.mode === 'targeted' ? 14 : 28;
+  if (input.selectedMarketSegment) {
+    return getProfessionProfilesByMarketSegment(input.selectedMarketSegment, randomCount);
+  }
+
   return getRandomProfessionProfiles(randomCount);
 }
 
@@ -126,7 +158,7 @@ function pickRandomPatternBucket(buckets, usedPatternRound) {
   return availablePatterns[Math.floor(Math.random() * availablePatterns.length)];
 }
 
-function buildCandidatesForPair(cityRecord, profile, maxRootLength) {
+function buildCandidatesForPair(cityRecord, profile, maxRootLength, selectedMarketSegment) {
   const cityTokens = getCityTokenVariants(cityRecord);
   const professionToken = toDomainToken(profile.profession);
   const stateToken = toDomainToken(cityRecord.state);
@@ -348,7 +380,10 @@ function buildCandidatesForPair(cityRecord, profile, maxRootLength) {
     }
   }
 
-  return candidates.filter(Boolean);
+  return candidates.filter(Boolean).map((candidate) => ({
+    ...candidate,
+    selectedMarketSegment: selectedMarketSegment || candidate.searchDemand.marketSegment
+  }));
 }
 
 export function createCandidatePool(input, options = {}) {
@@ -361,7 +396,7 @@ export function createCandidatePool(input, options = {}) {
   const candidates = [];
   for (const cityRecord of cities) {
     for (const profile of profiles) {
-      candidates.push(...buildCandidatesForPair(cityRecord, profile, maxRootLength));
+      candidates.push(...buildCandidatesForPair(cityRecord, profile, maxRootLength, input.selectedMarketSegment));
     }
   }
 
@@ -448,6 +483,7 @@ function toDomainResponse(candidate) {
     country: candidate.country,
     profession: candidate.profession,
     pattern: candidate.pattern,
+    selectedMarketSegment: candidate.selectedMarketSegment,
     premiumScore: candidate.premiumScore,
     domainPowerScore: candidate.domainPowerScore,
     salePotential: candidate.salePotential,
@@ -465,13 +501,14 @@ function toDomainResponse(candidate) {
 }
 
 export async function generateDomains(input) {
-  const cacheKey = buildGeoCacheKey(input);
+  const generationInput = withSelectedMarketSegment(input);
+  const cacheKey = buildGeoCacheKey(generationInput);
   const requestContext = {
-    mode: input.mode,
-    requestHash: createRequestHash(input)
+    mode: generationInput.mode,
+    requestHash: createRequestHash(generationInput)
   };
   const triedDomains = new Set();
-  const { value: cachedCandidates } = await getOrSetJson(cacheKey, () => createCandidatePool(input));
+  const { value: cachedCandidates } = await getOrSetJson(cacheKey, () => createCandidatePool(generationInput));
 
   if (!cachedCandidates.length) {
     throw new ApiError(422, 'No clean domain candidates could be generated for this request.', undefined, 'NO_CANDIDATES');
@@ -479,25 +516,25 @@ export async function generateDomains(input) {
 
   let domains = await reserveCandidates({
     candidates: cachedCandidates,
-    count: input.count,
+    count: generationInput.count,
     requestContext,
     triedDomains,
-    preserveScore: input.mode === 'targeted'
+    preserveScore: generationInput.mode === 'targeted'
   });
 
   let round = 0;
-  while (domains.length < input.count && round < 3) {
+  while (domains.length < generationInput.count && round < 3) {
     round += 1;
-    const expandedPool = createCandidatePool(input, {
+    const expandedPool = createCandidatePool(generationInput, {
       maxRootLength: Math.min(env.MAX_DOMAIN_ROOT_LENGTH + round * 3, 28)
     });
 
     const extraDomains = await reserveCandidates({
       candidates: expandedPool,
-      count: input.count - domains.length,
+      count: generationInput.count - domains.length,
       requestContext,
       triedDomains,
-      preserveScore: input.mode === 'targeted'
+      preserveScore: generationInput.mode === 'targeted'
     });
 
     domains = [...domains, ...extraDomains];
@@ -507,7 +544,7 @@ export async function generateDomains(input) {
     throw new ApiError(
       409,
       'No unused domains are available for this exact request. Try a broader country, city, or profession.',
-      { requested: input.count, generated: domains.length },
+      { requested: generationInput.count, generated: domains.length, selectedMarketSegment: generationInput.selectedMarketSegment },
       'INSUFFICIENT_UNIQUE_DOMAINS'
     );
   }
@@ -516,14 +553,15 @@ export async function generateDomains(input) {
 }
 
 export async function generatePremiumDomains(input) {
-  const cacheKey = buildGeoCacheKey(input);
+  const generationInput = withSelectedMarketSegment(input);
+  const cacheKey = buildGeoCacheKey(generationInput);
   const requestContext = {
     mode: 'premium',
-    requestHash: createRequestHash(input)
+    requestHash: createRequestHash(generationInput)
   };
   const triedDomains = new Set();
-  const filters = input.premiumFilters;
-  const { value: cachedCandidates } = await getOrSetJson(cacheKey, () => createCandidatePool(input, { limit: 1200 }));
+  const filters = generationInput.premiumFilters;
+  const { value: cachedCandidates } = await getOrSetJson(cacheKey, () => createCandidatePool(generationInput, { limit: 1200 }));
 
   if (!cachedCandidates.length) {
     throw new ApiError(422, 'No clean premium domain candidates could be generated for this request.', undefined, 'NO_CANDIDATES');
@@ -532,22 +570,22 @@ export async function generatePremiumDomains(input) {
   const rankedCandidates = rankPremiumCandidates(cachedCandidates, filters).slice(0, filters.internalCandidateLimit);
   let domains = await reserveRankedCandidates({
     candidates: rankedCandidates,
-    count: input.count,
+    count: generationInput.count,
     requestContext,
     triedDomains
   });
 
   let round = 0;
-  while (domains.length < input.count && round < 3) {
+  while (domains.length < generationInput.count && round < 3) {
     round += 1;
-    const expandedPool = createCandidatePool(input, {
+    const expandedPool = createCandidatePool(generationInput, {
       maxRootLength: Math.min(env.MAX_DOMAIN_ROOT_LENGTH + round * 3, 28),
       limit: 1200
     });
     const extraRankedCandidates = rankPremiumCandidates(expandedPool, filters).slice(0, filters.internalCandidateLimit);
     const extraDomains = await reserveRankedCandidates({
       candidates: extraRankedCandidates,
-      count: input.count - domains.length,
+      count: generationInput.count - domains.length,
       requestContext,
       triedDomains
     });
@@ -559,13 +597,14 @@ export async function generatePremiumDomains(input) {
     throw new ApiError(
       409,
       'No unused premium domains match these filters. Try lowering score filters or broadening city/profession.',
-      { requested: input.count, generated: domains.length, filters },
+      { requested: generationInput.count, generated: domains.length, filters, selectedMarketSegment: generationInput.selectedMarketSegment },
       'INSUFFICIENT_PREMIUM_DOMAINS'
     );
   }
 
   return {
     filters,
+    selectedMarketSegment: generationInput.selectedMarketSegment,
     candidatePoolSize: cachedCandidates.length,
     domains: domains.map(toDomainResponse)
   };
