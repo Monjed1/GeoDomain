@@ -391,6 +391,240 @@ The offline model uses:
 
 High trademark-risk domains are rejected before they can be returned or stored. This is a local risk filter, not legal advice or an official trademark clearance.
 
+### Score Interpretation Guide
+
+All scoring is offline and heuristic-based. The scores are designed for sorting and filtering domain ideas, not for guaranteeing domain sales.
+
+#### `domainPowerScore`
+
+Overall score from `0` to `100`. This is the main field to sort by.
+
+It combines:
+
+- search demand
+- estimated CPC
+- buyer pool
+- lead value
+- brandability
+- liquidity
+- pattern intent
+- trademark risk penalty
+
+| Score | Meaning | Suggested action |
+| --- | --- | --- |
+| `88-100` | Excellent domain opportunity. Strong commercial intent, buyer pool, and resale potential. | Prioritize first. Check availability and consider outreach. |
+| `76-87` | Strong domain opportunity. Usually worth reviewing manually. | Good candidate for domain flipping or lead-gen testing. |
+| `62-75` | Medium opportunity. Some signals are good, but one or more areas are weaker. | Keep if niche/city matters; otherwise compare against better domains. |
+| `0-61` | Weak opportunity. Low demand, low buyer pool, weak wording, or low commercial value. | Usually skip unless you have a specific buyer in mind. |
+
+#### `salePotential`
+
+Human-readable version of `domainPowerScore`.
+
+| Value | Meaning |
+| --- | --- |
+| `very_high` | Best candidates. Usually high-intent services in good cities with strong buyer economics. |
+| `high` | Strong candidates. Good enough for review and outreach. |
+| `medium` | Usable, but not obviously premium. |
+| `low` | Weak resale signal. Usually skip. |
+
+#### `searchDemand`
+
+Estimates how many people may search for the local service and how expensive the keyword is.
+
+Fields:
+
+| Field | Meaning |
+| --- | --- |
+| `keyword` | Offline keyword phrase used for scoring, such as `miami injury`. |
+| `estimatedMonthlySearchVolume` | Estimated local monthly search demand. |
+| `estimatedCpcUsd` | Estimated cost per click in USD. Higher CPC means advertisers may pay more for leads. |
+| `demandScore` | Combined demand score from `0` to `100`. |
+| `marketSegment` | Category used by the offline model, such as `legal`, `dental`, `medical`, or `home_services`. |
+| `confidence` | Always `offline_estimate` because no external API is used. |
+
+Good and bad ranges:
+
+| Metric | Good | Medium | Weak |
+| --- | --- | --- | --- |
+| `estimatedMonthlySearchVolume` | `700+` | `250-699` | below `250` |
+| `estimatedCpcUsd` | `$20+` | `$7-$19.99` | below `$7` |
+| `demandScore` | `80+` | `55-79` | below `55` |
+
+High CPC niches like injury law, roofing, plumbing, HVAC, dental implants, mortgage, and B2B software often have stronger resale potential.
+
+#### `buyerPool`
+
+Estimates how many businesses could realistically buy the domain.
+
+Fields:
+
+| Field | Meaning |
+| --- | --- |
+| `estimatedBusinesses` | Estimated number of potential buyers in the city/category. |
+| `buyerPoolScore` | Buyer pool score from `0` to `100`. |
+| `cityTier` | City market size: `mega`, `large`, `medium`, `local`, or `broad`. |
+| `confidence` | Always `offline_estimate`. |
+
+Good and bad ranges:
+
+| Metric | Good | Medium | Weak |
+| --- | --- | --- | --- |
+| `estimatedBusinesses` | `300+` | `80-299` | below `80` |
+| `buyerPoolScore` | `75+` | `50-74` | below `50` |
+
+A big buyer pool matters because a domain is easier to sell when many businesses could use it.
+
+#### `leadValue`
+
+Estimates the value of one converted customer in that niche.
+
+Fields:
+
+| Field | Meaning |
+| --- | --- |
+| `estimatedLeadValueUsd` | Estimated value of one converted customer or serious lead. |
+| `leadValueScore` | Score from `0` to `100`. |
+| `closeDifficulty` | `low`, `medium`, or `high`. High-value leads can be harder to close. |
+| `confidence` | Always `offline_estimate`. |
+
+Good and bad ranges:
+
+| Metric | Good | Medium | Weak |
+| --- | --- | --- | --- |
+| `estimatedLeadValueUsd` | `$750+` | `$200-$749` | below `$200` |
+| `leadValueScore` | `80+` | `45-79` | below `45` |
+
+Examples:
+
+| Niche | Typical offline lead value |
+| --- | --- |
+| Personal injury lawyer | `$3500+` |
+| Roofer | around `$2000` |
+| Solar installer | around `$1800` |
+| Pool builder | around `$1700` |
+| Dental implants | around `$1200` |
+| Plumber | around `$550` |
+| Barber, cafe, bakery, car wash | around `$90-$120` |
+
+High lead value is very important for domain flipping because a business can justify paying more for a domain when one new customer is valuable.
+
+#### `brandability`
+
+Measures how clean, memorable, and commercially usable the domain sounds.
+
+Fields:
+
+| Field | Meaning |
+| --- | --- |
+| `brandabilityScore` | Overall brandability score from `0` to `100`. |
+| `lengthScore` | Rewards shorter domain roots. |
+| `pronounceableScore` | Rewards pronounceable letter flow. |
+| `naturalWordOrderScore` | Rewards natural phrasing like `miamidentist`. |
+| `exactMatchIntentScore` | Rewards exact local-service intent. |
+| `simplicityScore` | Rewards simple letters and avoids awkward clusters. |
+| `strengths` | Machine-friendly reasons for a strong brandability score. |
+
+Good and bad ranges:
+
+| Score | Meaning |
+| --- | --- |
+| `85-100` | Very brandable. Short, clear, natural, easy to say. |
+| `70-84` | Good. Usable, but may be longer or less exact. |
+| `55-69` | Average. Might be acceptable for SEO, but not premium. |
+| below `55` | Weak. Usually too long, awkward, or not memorable. |
+
+Strong brandability usually means:
+
+- no numbers
+- no hyphens
+- short root
+- easy to pronounce
+- exact service intent
+- natural word order
+
+#### `liquidity`
+
+Predicts how easy the domain may be to sell quickly.
+
+Fields:
+
+| Field | Meaning |
+| --- | --- |
+| `liquidityScore` | Overall liquidity score from `0` to `100`. |
+| `sellSpeed` | `fast`, `moderate_fast`, `moderate`, or `slow`. |
+| `exactMatch` | Whether the pattern matches strong buyer/search intent. |
+| `cpcScore` | CPC contribution to liquidity. |
+| `cityMarketIndex` | City demand index used in the score. |
+| `confidence` | Always `offline_estimate`. |
+
+Good and bad ranges:
+
+| Score | Meaning | Suggested action |
+| --- | --- | --- |
+| `86-100` | Fast-moving candidate. Strong exact match, strong buyer pool, good CPC. | Prioritize for outreach. |
+| `72-85` | Good liquidity. Could sell with targeted outreach. | Keep and test. |
+| `58-71` | Moderate liquidity. May need the right buyer. | Review manually. |
+| below `58` | Slow liquidity. Harder to resell quickly. | Usually skip. |
+
+Liquidity is not the same as lead value. A domain can have very high lead value but lower liquidity if the buyer pool is small or the wording is hard to sell.
+
+#### `trademarkRisk`
+
+Local risk filter for protected brand terms and suspicious wording.
+
+Fields:
+
+| Field | Meaning |
+| --- | --- |
+| `level` | `low`, `medium`, or `high`. |
+| `flags` | Terms that triggered the risk check. |
+
+Behavior:
+
+- `high` risk domains are blocked and not returned.
+- `medium` risk domains are allowed but penalized.
+- `low` risk domains are preferred.
+
+Examples of high-risk protected terms include major brands like `google`, `apple`, `amazon`, `facebook`, `instagram`, `tesla`, `nike`, `openai`, and similar.
+
+### Recommended Filtering Rules
+
+For aggressive domain flipping:
+
+```text
+domainPowerScore >= 80
+liquidity.liquidityScore >= 75
+brandability.brandabilityScore >= 75
+trademarkRisk.level = low
+```
+
+For premium lead-gen domains:
+
+```text
+leadValue.estimatedLeadValueUsd >= 500
+searchDemand.estimatedCpcUsd >= 15
+buyerPool.estimatedBusinesses >= 150
+trademarkRisk.level = low
+```
+
+For fast resale outreach:
+
+```text
+liquidity.sellSpeed = fast OR moderate_fast
+buyerPool.buyerPoolScore >= 70
+brandability.brandabilityScore >= 80
+```
+
+For domains to skip:
+
+```text
+domainPowerScore < 62
+OR trademarkRisk.level = medium/high
+OR brandability.brandabilityScore < 55
+OR liquidity.liquidityScore < 58
+```
+
 ## Domain Generation Logic
 
 The generator uses multiple patterns. The `pattern` value in each response tells you which structure created the domain.
