@@ -834,7 +834,7 @@ Main Redis keys:
 | Key | Type | Purpose |
 | --- | --- | --- |
 | `used_domains` | Set | Global duplicate-prevention set. |
-| `geo:v5:{country}:{city}:{profession}:{marketSegment}:{mode}:{count}` | String JSON | Cached candidate pool. |
+| `geo:v6:{country}:{city}:{profession}:{marketSegment}:{mode}:{count}` | String JSON | Cached candidate pool. |
 | `domain:{domain}` | Hash | Metadata for each generated domain. |
 | `generated_domains` | Set | Index of generated domains. |
 | `generated_domains_by_time` | Sorted set | Timeline index. |
@@ -842,7 +842,7 @@ Main Redis keys:
 | `stats:top_professions` | Sorted set | Profession leaderboard. |
 | `stats:top_cities` | Sorted set | City leaderboard. |
 
-Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v5` cache version includes the selected market segment so random segment requests do not keep reusing one old cached segment.
+Final generated domains are never returned directly from cache. Redis caches candidate pools, then each candidate is checked atomically against `used_domains` before it is returned. The `v6` cache version includes the selected market segment and the stricter market classifier so random segment requests do not keep reusing old cached segment data.
 
 ## Duplicate Prevention
 

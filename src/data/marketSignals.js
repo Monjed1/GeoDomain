@@ -137,7 +137,7 @@ export const MARKET_SEGMENTS = [
   },
   {
     key: 'finance',
-    terms: ['accountant', 'cpa', 'bookkeeper', 'financial', 'insurance', 'tax', 'payroll', 'wealth'],
+    terms: ['accountant', 'cpa', 'bookkeeper', 'financial', 'insurance', 'tax', 'tax advisor', 'tax preparer', 'payroll', 'wealth'],
     baseMonthlyVolume: 430,
     baseCpcUsd: 18,
     leadValueUsd: 420,
@@ -183,7 +183,7 @@ export const MARKET_SEGMENTS = [
   },
   {
     key: 'events_creative',
-    terms: ['photographer', 'wedding', 'planner', 'music', 'artist', 'studio', 'floral', 'event'],
+    terms: ['photographer', 'wedding', 'planner', 'music', 'artist', 'studio', 'floral', 'florist', 'flowers', 'event'],
     baseMonthlyVolume: 360,
     baseCpcUsd: 6,
     leadValueUsd: 220,

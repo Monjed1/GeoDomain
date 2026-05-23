@@ -63,6 +63,46 @@ test('brandability rewards short exact-match natural domains', () => {
   assert.ok(shortExact.liquidity.liquidityScore >= longBrandable.liquidity.liquidityScore);
 });
 
+test('market segment classifier avoids substring false positives', () => {
+  const florist = evaluateDomainOpportunity(
+    candidate({
+      root: 'safloralexperts',
+      domain: 'safloralexperts.com',
+      city: 'San Antonio',
+      state: 'Texas',
+      profession: 'florist',
+      serviceKeyword: 'floral',
+      pattern: 'CityServiceExperts'
+    })
+  );
+  const foodTruck = evaluateDomainOpportunity(
+    candidate({
+      root: 'streetfoodtexas',
+      domain: 'streetfoodtexas.com',
+      city: 'Dallas',
+      state: 'Texas',
+      profession: 'food truck',
+      serviceKeyword: 'street food',
+      pattern: 'ServiceInState'
+    })
+  );
+  const taxAdvisor = evaluateDomainOpportunity(
+    candidate({
+      root: 'dallasfilehub',
+      domain: 'dallasfilehub.com',
+      city: 'Dallas',
+      state: 'Texas',
+      profession: 'tax advisor',
+      serviceKeyword: 'file',
+      pattern: 'CityServiceHub'
+    })
+  );
+
+  assert.equal(florist.searchDemand.marketSegment, 'events_creative');
+  assert.equal(foodTruck.searchDemand.marketSegment, 'food_local');
+  assert.equal(taxAdvisor.searchDemand.marketSegment, 'finance');
+});
+
 test('trademark risk blocks protected brand terms', () => {
   const risk = evaluateTrademarkRisk(candidate({ root: 'googlemiamilawyer', domain: 'googlemiamilawyer.com' }));
 

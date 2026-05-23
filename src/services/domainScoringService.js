@@ -9,7 +9,125 @@ import {
   PROTECTED_BRAND_TERMS,
   SCORING_VERSION
 } from '../data/marketSignals.js';
-import { hasVowel, toDomainToken } from '../utils/domainUtils.js';
+import { hasVowel, normalizeHumanText, toDomainToken } from '../utils/domainUtils.js';
+
+const SEGMENT_OVERRIDES = [
+  {
+    key: 'legal',
+    terms: [
+      'lawyer',
+      'attorney',
+      'injury lawyer',
+      'personal injury lawyer',
+      'divorce lawyer',
+      'criminal lawyer',
+      'immigration lawyer',
+      'bankruptcy lawyer',
+      'tax lawyer',
+      'family law',
+      'estate planning'
+    ]
+  },
+  {
+    key: 'finance',
+    terms: ['tax advisor', 'tax preparer', 'accountant', 'cpa', 'bookkeeper', 'financial advisor', 'insurance', 'insurance agent']
+  },
+  {
+    key: 'events_creative',
+    terms: ['florist', 'floral', 'flowers', 'wedding service', 'wedding planner', 'photographer', 'videographer', 'artist']
+  },
+  {
+    key: 'food_local',
+    terms: ['food truck', 'street food', 'restaurant', 'bakery', 'cafe', 'caterer', 'chef', 'coffee shop']
+  },
+  {
+    key: 'home_services',
+    terms: [
+      'plumber',
+      'electrician',
+      'roofer',
+      'hvac',
+      'contractor',
+      'handyman',
+      'landscaper',
+      'cleaner',
+      'locksmith',
+      'carpenter',
+      'mover',
+      'remodeler',
+      'flooring',
+      'concrete',
+      'pool builder',
+      'pest control',
+      'tree service',
+      'junk removal',
+      'pressure washing',
+      'solar installer'
+    ]
+  },
+  {
+    key: 'real_estate',
+    terms: ['realtor', 'real estate', 'broker', 'property manager', 'mortgage broker', 'home inspector']
+  },
+  {
+    key: 'auto',
+    terms: ['mechanic', 'auto repair', 'body shop', 'car dealer', 'tire shop', 'towing', 'car wash', 'mobile mechanic']
+  },
+  {
+    key: 'marketing_tech',
+    terms: [
+      'web designer',
+      'developer',
+      'seo',
+      'marketing agency',
+      'graphic designer',
+      'app developer',
+      'ai consultant',
+      'cybersecurity',
+      'it services',
+      'managed it',
+      'saas',
+      'automation',
+      'ai agency',
+      'lead generation'
+    ]
+  },
+  {
+    key: 'education_fitness',
+    terms: ['tutor', 'driving school', 'music teacher', 'coach', 'personal trainer', 'fitness']
+  },
+  {
+    key: 'beauty',
+    terms: ['barber', 'hairstylist', 'makeup artist', 'nail salon', 'esthetician', 'tattoo artist', 'med spa']
+  },
+  {
+    key: 'medical',
+    terms: [
+      'doctor',
+      'surgeon',
+      'dermatologist',
+      'chiropractor',
+      'therapist',
+      'psychologist',
+      'psychiatrist',
+      'pediatrician',
+      'cardiologist',
+      'neurologist',
+      'gynecologist',
+      'veterinarian',
+      'optometrist',
+      'pharmacy',
+      'physiotherapist',
+      'nutritionist',
+      'urgent care',
+      'pain clinic'
+    ]
+  },
+  {
+    key: 'dental',
+    terms: ['dentist', 'orthodontist', 'dental implants']
+  }
+];
 
 function clamp(value, min = 0, max = 100) {
   return Math.min(max, Math.max(min, value));
@@ -19,27 +137,48 @@ function roundCurrency(value) {
   return Math.round(value * 100) / 100;
 }
 
-function tokenText(candidate) {
-  return [
-    candidate.root,
-    candidate.domain,
-    candidate.city,
-    candidate.state,
-    candidate.country,
-    candidate.profession,
-    candidate.serviceKeyword,
-    candidate.pattern
-  ]
-    .map((value) => toDomainToken(value || ''))
-    .join(' ');
+function getContextTokens(candidate) {
+  const values = [candidate.profession, candidate.serviceKeyword].filter(Boolean);
+  const phraseTokens = new Set(values.map((value) => toDomainToken(value)).filter(Boolean));
+  const wordTokens = new Set(
+    values
+      .flatMap((value) => normalizeHumanText(value).toLowerCase().split(/\s+/))
+      .map((value) => toDomainToken(value))
+      .filter(Boolean)
+  );
+
+  return { phraseTokens, wordTokens };
+}
+
+function termMatchesContext(term, context) {
+  const phraseToken = toDomainToken(term);
+  const words = normalizeHumanText(term)
+    .toLowerCase()
+    .split(/\s+/)
+    .map((word) => toDomainToken(word))
+    .filter(Boolean);
+
+  if (!phraseToken) return false;
+  if (context.phraseTokens.has(phraseToken)) return true;
+  if (words.length === 1 && context.wordTokens.has(phraseToken)) return true;
+  return words.length > 1 && words.every((word) => context.wordTokens.has(word));
+}
+
+function findSegmentByKey(key) {
+  return MARKET_SEGMENTS.find((segment) => segment.key === key);
 }
 
 function getMarketSegment(candidate) {
-  const text = tokenText(candidate);
+  const context = getContextTokens(candidate);
+  const override = SEGMENT_OVERRIDES.find((segment) => segment.terms.some((term) => termMatchesContext(term, context)));
+
+  if (override) {
+    return findSegmentByKey(override.key);
+  }
 
   return (
-    MARKET_SEGMENTS.find((segment) => segment.terms.some((term) => text.includes(toDomainToken(term)))) ||
-    MARKET_SEGMENTS.find((segment) => segment.key === 'default_local')
+    MARKET_SEGMENTS.find((segment) => segment.terms.some((term) => termMatchesContext(term, context))) ||
+    findSegmentByKey('default_local')
   );
 }
 
@@ -100,8 +239,8 @@ function hasNaturalWordOrder(candidate) {
 }
 
 function getLeadValueSignal(candidate, segment) {
-  const text = tokenText(candidate);
-  const override = LEAD_VALUE_OVERRIDES.find((entry) => entry.terms.some((term) => text.includes(toDomainToken(term))));
+  const context = getContextTokens(candidate);
+  const override = LEAD_VALUE_OVERRIDES.find((entry) => entry.terms.some((term) => termMatchesContext(term, context)));
   const estimatedLeadValueUsd = override?.estimatedLeadValueUsd || segment.leadValueUsd;
   const leadValueScore = clamp(
     Math.round(
