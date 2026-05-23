@@ -238,7 +238,7 @@ Response:
 ```json
 {
   "success": true,
-  "count": 3,
+  "count": 1,
   "domains": [
     {
       "domain": "miamidoctor.com",
@@ -303,22 +303,6 @@ Response:
         "level": "low",
         "flags": []
       }
-    },
-    {
-      "domain": "doctorinmiami.com",
-      "city": "Miami",
-      "state": "Florida",
-      "country": "United States",
-      "profession": "doctor",
-      "pattern": "ProfessionInCity"
-    },
-    {
-      "domain": "miamiclinic.com",
-      "city": "Miami",
-      "state": "Florida",
-      "country": "United States",
-      "profession": "doctor",
-      "pattern": "City+ServiceKeyword"
     }
   ]
 }
@@ -327,6 +311,108 @@ Response:
 The response count can be lower than requested only when the exact request has too few unused candidates left. If no unused domains are available, the API returns `409`.
 
 Every returned domain includes offline opportunity scoring. The API does not call Google, USPTO, DataForSEO, or any external provider. Scores are estimated from built-in commercial-intent, city-market, buyer-density, pattern-quality, and protected-brand rules.
+
+### `POST /generate-premium-domains`
+
+Generates a larger internal candidate pool, filters weak domains, ranks the survivors, reserves only the best unused domains, and returns the premium winners.
+
+Use this endpoint when you want the strongest domains for resale or lead generation instead of a broad random mix.
+
+URL:
+
+```text
+POST http://localhost:3232/generate-premium-domains
+```
+
+Request body:
+
+```json
+{
+  "country": "United States",
+  "State": "Florida",
+  "city": "Miami",
+  "profession": "injurylawyer",
+  "mode": "targeted",
+  "count": 10,
+  "minDomainPowerScore": 80,
+  "minLiquidityScore": 75,
+  "minBrandabilityScore": 75,
+  "minLeadValueUsd": 500,
+  "salePotential": "high",
+  "internalCandidateLimit": 600
+}
+```
+
+Premium-only fields:
+
+| Field | Required | Default | Notes |
+| --- | --- | --- | --- |
+| `minDomainPowerScore` | No | `76` | Rejects candidates below this overall score. |
+| `minLiquidityScore` | No | `70` | Rejects domains that may be harder to sell quickly. |
+| `minBrandabilityScore` | No | `70` | Rejects awkward or weak brandable names. |
+| `minLeadValueUsd` | No | `0` | Rejects niches below this estimated customer value. |
+| `salePotential` | No | none | Optional minimum: `low`, `medium`, `high`, or `very_high`. |
+| `internalCandidateLimit` | No | `600` | Number of ranked internal candidates considered; max `1200`. |
+
+Example response:
+
+```json
+{
+  "success": true,
+  "premium": true,
+  "count": 1,
+  "candidatePoolSize": 600,
+  "filters": {
+    "minDomainPowerScore": 80,
+    "minLiquidityScore": 75,
+    "minBrandabilityScore": 75,
+    "minLeadValueUsd": 500,
+    "salePotential": "high",
+    "internalCandidateLimit": 600
+  },
+  "domains": [
+    {
+      "domain": "miamiinjurylawyer.com",
+      "city": "Miami",
+      "state": "Florida",
+      "country": "United States",
+      "profession": "personal injury lawyer",
+      "pattern": "City+Profession",
+      "premiumScore": 95,
+      "domainPowerScore": 94,
+      "salePotential": "very_high",
+      "searchDemand": {
+        "keyword": "miami injury",
+        "estimatedMonthlySearchVolume": 1311,
+        "estimatedCpcUsd": 54.92,
+        "demandScore": 100,
+        "marketSegment": "legal",
+        "confidence": "offline_estimate"
+      },
+      "leadValue": {
+        "estimatedLeadValueUsd": 3500,
+        "leadValueScore": 100,
+        "closeDifficulty": "high",
+        "confidence": "offline_estimate"
+      },
+      "liquidity": {
+        "liquidityScore": 96,
+        "sellSpeed": "fast",
+        "exactMatch": true,
+        "cpcScore": 100,
+        "cityMarketIndex": 78,
+        "confidence": "offline_estimate"
+      },
+      "trademarkRisk": {
+        "level": "low",
+        "flags": []
+      }
+    }
+  ]
+}
+```
+
+If no unused domains match the premium filters, the endpoint returns `409` with code `INSUFFICIENT_PREMIUM_DOMAINS`. Lower the filters or broaden the city/profession.
 
 ### `GET /stats`
 

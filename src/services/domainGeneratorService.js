@@ -19,6 +19,7 @@ import { buildGeoCacheKey, getOrSetJson } from './cacheService.js';
 import { getCityTokenVariants, resolveCities } from './cityService.js';
 import { evaluateDomainOpportunity } from './domainScoringService.js';
 import { releaseDomain, reserveDomain } from './duplicateService.js';
+import { rankPremiumCandidates } from './premiumRankingService.js';
 
 const BRAND_PREFIXES = [
   'prime',
@@ -352,6 +353,7 @@ function buildCandidatesForPair(cityRecord, profile, maxRootLength) {
 
 export function createCandidatePool(input, options = {}) {
   const maxRootLength = options.maxRootLength || env.MAX_DOMAIN_ROOT_LENGTH;
+  const limit = options.limit || 1200;
   const cityLimit = input.city ? 1 : input.mode === 'targeted' ? 16 : 42;
   const cities = resolveCities(input, cityLimit);
   const profiles = getProfessionProfiles(input);
@@ -367,7 +369,7 @@ export function createCandidatePool(input, options = {}) {
   const sorted = uniqueCandidates.sort((left, right) => right.score - left.score || left.root.length - right.root.length);
   const patternBalanced = orderCandidatesByRandomPattern(sorted, { preserveScore: input.mode === 'targeted' });
 
-  return patternBalanced.slice(0, 1200);
+  return patternBalanced.slice(0, limit);
 }
 
 async function reserveCandidates({ candidates, count, requestContext, triedDomains, preserveScore = false }) {
@@ -405,6 +407,61 @@ async function reserveCandidates({ candidates, count, requestContext, triedDomai
   }
 
   return reserved;
+}
+
+async function reserveRankedCandidates({ candidates, count, requestContext, triedDomains }) {
+  const reserved = [];
+  let attempts = 0;
+
+  for (const candidate of candidates) {
+    if (reserved.length >= count) break;
+    if (attempts >= env.DOMAIN_GENERATION_ATTEMPTS) break;
+    attempts += 1;
+
+    if (triedDomains.has(candidate.domain)) continue;
+    triedDomains.add(candidate.domain);
+
+    const reservedInRedis = await reserveDomain(candidate.domain);
+    if (!reservedInRedis) continue;
+
+    try {
+      const saved = await saveGeneratedDomain(candidate, requestContext);
+      if (!saved) {
+        await releaseDomain(candidate.domain);
+        continue;
+      }
+      reserved.push(candidate);
+    } catch (error) {
+      await releaseDomain(candidate.domain);
+      throw error;
+    }
+  }
+
+  return reserved;
+}
+
+function toDomainResponse(candidate) {
+  return {
+    domain: candidate.domain,
+    city: candidate.city,
+    state: candidate.state,
+    country: candidate.country,
+    profession: candidate.profession,
+    pattern: candidate.pattern,
+    premiumScore: candidate.premiumScore,
+    domainPowerScore: candidate.domainPowerScore,
+    salePotential: candidate.salePotential,
+    reasons: candidate.reasons,
+    searchDemand: candidate.searchDemand,
+    buyerPool: candidate.buyerPool,
+    leadValue: candidate.leadValue,
+    brandability: candidate.brandability,
+    liquidity: candidate.liquidity,
+    trademarkRisk: {
+      level: candidate.trademarkRisk.level,
+      flags: candidate.trademarkRisk.flags
+    }
+  };
 }
 
 export async function generateDomains(input) {
@@ -455,26 +512,63 @@ export async function generateDomains(input) {
     );
   }
 
-  return domains.map((candidate) => ({
-    domain: candidate.domain,
-    city: candidate.city,
-    state: candidate.state,
-    country: candidate.country,
-    profession: candidate.profession,
-    pattern: candidate.pattern,
-    domainPowerScore: candidate.domainPowerScore,
-    salePotential: candidate.salePotential,
-    reasons: candidate.reasons,
-    searchDemand: candidate.searchDemand,
-    buyerPool: candidate.buyerPool,
-    leadValue: candidate.leadValue,
-    brandability: candidate.brandability,
-    liquidity: candidate.liquidity,
-    trademarkRisk: {
-      level: candidate.trademarkRisk.level,
-      flags: candidate.trademarkRisk.flags
-    }
-  }));
+  return domains.map(toDomainResponse);
+}
+
+export async function generatePremiumDomains(input) {
+  const cacheKey = buildGeoCacheKey(input);
+  const requestContext = {
+    mode: 'premium',
+    requestHash: createRequestHash(input)
+  };
+  const triedDomains = new Set();
+  const filters = input.premiumFilters;
+  const { value: cachedCandidates } = await getOrSetJson(cacheKey, () => createCandidatePool(input, { limit: 1200 }));
+
+  if (!cachedCandidates.length) {
+    throw new ApiError(422, 'No clean premium domain candidates could be generated for this request.', undefined, 'NO_CANDIDATES');
+  }
+
+  const rankedCandidates = rankPremiumCandidates(cachedCandidates, filters).slice(0, filters.internalCandidateLimit);
+  let domains = await reserveRankedCandidates({
+    candidates: rankedCandidates,
+    count: input.count,
+    requestContext,
+    triedDomains
+  });
+
+  let round = 0;
+  while (domains.length < input.count && round < 3) {
+    round += 1;
+    const expandedPool = createCandidatePool(input, {
+      maxRootLength: Math.min(env.MAX_DOMAIN_ROOT_LENGTH + round * 3, 28),
+      limit: 1200
+    });
+    const extraRankedCandidates = rankPremiumCandidates(expandedPool, filters).slice(0, filters.internalCandidateLimit);
+    const extraDomains = await reserveRankedCandidates({
+      candidates: extraRankedCandidates,
+      count: input.count - domains.length,
+      requestContext,
+      triedDomains
+    });
+
+    domains = [...domains, ...extraDomains];
+  }
+
+  if (domains.length === 0) {
+    throw new ApiError(
+      409,
+      'No unused premium domains match these filters. Try lowering score filters or broadening city/profession.',
+      { requested: input.count, generated: domains.length, filters },
+      'INSUFFICIENT_PREMIUM_DOMAINS'
+    );
+  }
+
+  return {
+    filters,
+    candidatePoolSize: cachedCandidates.length,
+    domains: domains.map(toDomainResponse)
+  };
 }
 
 export function getSupportedProfessionCount() {
