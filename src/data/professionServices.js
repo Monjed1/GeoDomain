@@ -590,6 +590,258 @@ export const PROFESSION_PROFILES = [
     brandRoots: ['tree', 'arbor', 'yard', 'green']
   },
   {
+    profession: 'personal injury lawyer',
+    aliases: ['injury lawyer', 'injurylawyer', 'accident lawyer', 'injury attorney', 'personal injury attorney'],
+    services: ['injury', 'accident', 'claims', 'compensation', 'legal', 'attorney', 'settlement', 'justice'],
+    brandRoots: ['injury', 'claim', 'legal', 'justice']
+  },
+  {
+    profession: 'divorce lawyer',
+    aliases: ['divorcelawyer', 'divorce attorney', 'separation lawyer'],
+    services: ['divorce', 'family law', 'custody', 'support', 'legal', 'attorney', 'mediation', 'settlement'],
+    brandRoots: ['divorce', 'family', 'legal', 'case']
+  },
+  {
+    profession: 'criminal lawyer',
+    aliases: ['criminallawyer', 'criminal attorney', 'defense lawyer', 'criminal defense attorney'],
+    services: ['criminal', 'defense', 'legal', 'attorney', 'court', 'charges', 'rights', 'justice'],
+    brandRoots: ['defense', 'legal', 'rights', 'court']
+  },
+  {
+    profession: 'bankruptcy lawyer',
+    aliases: ['bankruptcy', 'bankruptcy attorney', 'debt lawyer'],
+    services: ['bankruptcy', 'debt', 'relief', 'credit', 'legal', 'attorney', 'chapter', 'fresh start'],
+    brandRoots: ['debt', 'relief', 'legal', 'fresh']
+  },
+  {
+    profession: 'tax lawyer',
+    aliases: ['taxlawyer', 'tax attorney', 'tax law'],
+    services: ['tax', 'irs', 'audit', 'relief', 'legal', 'attorney', 'debt', 'appeals'],
+    brandRoots: ['tax', 'legal', 'relief', 'audit']
+  },
+  {
+    profession: 'family law',
+    aliases: ['familylaw', 'family lawyer', 'family attorney'],
+    services: ['family law', 'custody', 'divorce', 'support', 'legal', 'attorney', 'mediation', 'case'],
+    brandRoots: ['family', 'legal', 'case', 'care']
+  },
+  {
+    profession: 'estate planning',
+    aliases: ['estateplanning', 'estate lawyer', 'wills and trusts'],
+    services: ['estate', 'wills', 'trusts', 'probate', 'legacy', 'planning', 'legal', 'assets'],
+    brandRoots: ['estate', 'legacy', 'trust', 'plan']
+  },
+  {
+    profession: 'psychiatrist',
+    aliases: ['mental health doctor', 'psychiatry clinic'],
+    services: ['psychiatry', 'mental health', 'therapy', 'medication', 'mind', 'wellness', 'care', 'clinic'],
+    brandRoots: ['mind', 'care', 'calm', 'well']
+  },
+  {
+    profession: 'pediatrician',
+    aliases: ['child doctor', 'pediatric clinic'],
+    services: ['pediatric', 'kids', 'children', 'clinic', 'health', 'care', 'family', 'wellness'],
+    brandRoots: ['kids', 'care', 'child', 'health']
+  },
+  {
+    profession: 'cardiologist',
+    aliases: ['heart doctor', 'cardiology clinic'],
+    services: ['heart', 'cardio', 'clinic', 'vascular', 'health', 'care', 'screening', 'wellness'],
+    brandRoots: ['heart', 'cardio', 'pulse', 'care']
+  },
+  {
+    profession: 'neurologist',
+    aliases: ['brain doctor', 'neurology clinic'],
+    services: ['neuro', 'brain', 'nerves', 'clinic', 'health', 'care', 'spine', 'specialist'],
+    brandRoots: ['neuro', 'brain', 'nerve', 'care']
+  },
+  {
+    profession: 'gynecologist',
+    aliases: ['obgyn', 'women doctor', 'womens health clinic'],
+    services: ['obgyn', 'women', 'clinic', 'health', 'care', 'pregnancy', 'wellness', 'medical'],
+    brandRoots: ['women', 'care', 'health', 'clinic']
+  },
+  {
+    profession: 'urgent care',
+    aliases: ['urgentcare', 'walk in clinic', 'rapid clinic'],
+    services: ['urgent', 'clinic', 'walk in', 'medical', 'health', 'care', 'rapid', 'same day'],
+    brandRoots: ['urgent', 'rapid', 'clinic', 'care']
+  },
+  {
+    profession: 'pain clinic',
+    aliases: ['painclinic', 'pain management', 'pain doctor'],
+    services: ['pain', 'clinic', 'relief', 'spine', 'therapy', 'care', 'management', 'recovery'],
+    brandRoots: ['pain', 'relief', 'spine', 'care']
+  },
+  {
+    profession: 'med spa',
+    aliases: ['medspa', 'medical spa', 'aesthetic clinic'],
+    services: ['medspa', 'aesthetics', 'skin', 'laser', 'beauty', 'injectables', 'glow', 'spa'],
+    brandRoots: ['glow', 'skin', 'spa', 'aesthetic']
+  },
+  {
+    profession: 'dental implants',
+    aliases: ['dentalimplants', 'implant dentist'],
+    services: ['implants', 'dental', 'smile', 'teeth', 'oral', 'restoration', 'clinic', 'care'],
+    brandRoots: ['implant', 'smile', 'dental', 'oral']
+  },
+  {
+    profession: 'remodeler',
+    aliases: ['home remodeler', 'remodeling contractor'],
+    services: ['remodel', 'renovation', 'home', 'kitchen', 'bath', 'build', 'design', 'upgrade'],
+    brandRoots: ['remodel', 'home', 'build', 'upgrade']
+  },
+  {
+    profession: 'flooring',
+    aliases: ['flooring installer', 'flooring contractor'],
+    services: ['flooring', 'floors', 'tile', 'wood', 'vinyl', 'install', 'repair', 'home'],
+    brandRoots: ['floor', 'tile', 'wood', 'home']
+  },
+  {
+    profession: 'concrete',
+    aliases: ['concrete contractor', 'cement contractor'],
+    services: ['concrete', 'cement', 'driveway', 'patio', 'slab', 'repair', 'foundation', 'paving'],
+    brandRoots: ['concrete', 'cement', 'pave', 'slab']
+  },
+  {
+    profession: 'pool builder',
+    aliases: ['poolbuilder', 'pool contractor', 'pool installer'],
+    services: ['pool', 'builder', 'swimming', 'spa', 'water', 'backyard', 'design', 'install'],
+    brandRoots: ['pool', 'aqua', 'water', 'spa']
+  },
+  {
+    profession: 'property manager',
+    aliases: ['propertymanager', 'rental manager', 'property management'],
+    services: ['property', 'rentals', 'management', 'tenant', 'leasing', 'maintenance', 'realty', 'homes'],
+    brandRoots: ['property', 'rent', 'home', 'manage']
+  },
+  {
+    profession: 'home inspector',
+    aliases: ['homeinspector', 'property inspector'],
+    services: ['inspection', 'home', 'property', 'report', 'mold', 'roof', 'safety', 'buyer'],
+    brandRoots: ['inspect', 'home', 'report', 'safe']
+  },
+  {
+    profession: 'auto repair',
+    aliases: ['autorepair', 'car repair shop', 'auto shop'],
+    services: ['auto', 'repair', 'garage', 'engine', 'brake', 'service', 'diagnostic', 'mechanic'],
+    brandRoots: ['auto', 'repair', 'garage', 'motor']
+  },
+  {
+    profession: 'body shop',
+    aliases: ['bodyshop', 'collision repair', 'auto body'],
+    services: ['body shop', 'collision', 'paint', 'repair', 'auto', 'dent', 'bumper', 'restore'],
+    brandRoots: ['body', 'auto', 'paint', 'restore']
+  },
+  {
+    profession: 'car dealer',
+    aliases: ['cardealer', 'auto dealer', 'used cars'],
+    services: ['cars', 'dealer', 'auto', 'sales', 'used cars', 'finance', 'trade', 'drive'],
+    brandRoots: ['cars', 'auto', 'drive', 'dealer']
+  },
+  {
+    profession: 'tire shop',
+    aliases: ['tireshop', 'tyre shop', 'tire service'],
+    services: ['tires', 'wheels', 'alignment', 'brakes', 'auto', 'service', 'repair', 'shop'],
+    brandRoots: ['tire', 'wheel', 'auto', 'drive']
+  },
+  {
+    profession: 'car wash',
+    aliases: ['carwash', 'auto detailing', 'detailing service'],
+    services: ['car wash', 'detail', 'auto', 'clean', 'shine', 'ceramic', 'wax', 'mobile'],
+    brandRoots: ['wash', 'detail', 'shine', 'auto']
+  },
+  {
+    profession: 'mobile mechanic',
+    aliases: ['mobilemechanic', 'mobile auto repair'],
+    services: ['mobile mechanic', 'auto', 'repair', 'diagnostic', 'roadside', 'brake', 'engine', 'service'],
+    brandRoots: ['mobile', 'auto', 'repair', 'road']
+  },
+  {
+    profession: 'nail salon',
+    aliases: ['nailsalon', 'nails', 'manicure salon'],
+    services: ['nails', 'salon', 'manicure', 'pedicure', 'gel', 'spa', 'beauty', 'polish'],
+    brandRoots: ['nail', 'salon', 'glam', 'spa']
+  },
+  {
+    profession: 'tattoo artist',
+    aliases: ['tattooartist', 'tattoo shop'],
+    services: ['tattoo', 'ink', 'artist', 'studio', 'custom', 'piercing', 'design', 'art'],
+    brandRoots: ['ink', 'tattoo', 'art', 'studio']
+  },
+  {
+    profession: 'graphic designer',
+    aliases: ['graphicdesigner', 'brand designer', 'logo designer'],
+    services: ['graphics', 'design', 'logo', 'brand', 'creative', 'studio', 'print', 'visual'],
+    brandRoots: ['design', 'brand', 'logo', 'pixel']
+  },
+  {
+    profession: 'driving school',
+    aliases: ['drivingschool', 'driving instructor'],
+    services: ['driving', 'lessons', 'school', 'driver', 'training', 'license', 'road', 'test'],
+    brandRoots: ['drive', 'road', 'learn', 'license']
+  },
+  {
+    profession: 'food truck',
+    aliases: ['foodtruck', 'mobile food'],
+    services: ['food truck', 'street food', 'catering', 'events', 'mobile', 'grill', 'taste', 'meals'],
+    brandRoots: ['food', 'truck', 'taste', 'grill']
+  },
+  {
+    profession: 'junk removal',
+    aliases: ['junkremoval', 'hauling service'],
+    services: ['junk', 'removal', 'haul', 'cleanout', 'trash', 'debris', 'pickup', 'moving'],
+    brandRoots: ['junk', 'haul', 'clear', 'clean']
+  },
+  {
+    profession: 'pressure washing',
+    aliases: ['pressurewashing', 'power washing'],
+    services: ['pressure', 'washing', 'power wash', 'cleaning', 'driveway', 'house', 'deck', 'exterior'],
+    brandRoots: ['wash', 'clean', 'power', 'shine']
+  },
+  {
+    profession: 'storage',
+    aliases: ['self storage', 'storage units'],
+    services: ['storage', 'units', 'moving', 'secure', 'space', 'warehouse', 'boxes', 'rental'],
+    brandRoots: ['store', 'space', 'secure', 'unit']
+  },
+  {
+    profession: 'it services',
+    aliases: ['itservices', 'tech support', 'computer support'],
+    services: ['it', 'support', 'network', 'computers', 'helpdesk', 'security', 'cloud', 'service'],
+    brandRoots: ['it', 'tech', 'support', 'network']
+  },
+  {
+    profession: 'managed it',
+    aliases: ['managedit', 'managed services provider', 'msp'],
+    services: ['managed it', 'msp', 'support', 'network', 'security', 'cloud', 'helpdesk', 'monitoring'],
+    brandRoots: ['managed', 'it', 'secure', 'cloud']
+  },
+  {
+    profession: 'saas consultant',
+    aliases: ['saas', 'saas agency', 'software as a service'],
+    services: ['saas', 'software', 'platform', 'app', 'cloud', 'automation', 'startup', 'growth'],
+    brandRoots: ['saas', 'cloud', 'app', 'scale']
+  },
+  {
+    profession: 'automation agency',
+    aliases: ['automation', 'workflow automation', 'process automation'],
+    services: ['automation', 'workflow', 'process', 'ai', 'systems', 'integration', 'ops', 'scale'],
+    brandRoots: ['auto', 'flow', 'ops', 'scale']
+  },
+  {
+    profession: 'ai agency',
+    aliases: ['aiagency', 'ai consultant', 'aiconsultant'],
+    services: ['ai', 'automation', 'agents', 'chatbot', 'machine learning', 'software', 'data', 'workflow'],
+    brandRoots: ['ai', 'agent', 'data', 'logic']
+  },
+  {
+    profession: 'lead generation',
+    aliases: ['leadgeneration', 'lead gen', 'lead generation agency'],
+    services: ['leads', 'lead gen', 'appointments', 'sales', 'growth', 'marketing', 'pipeline', 'conversion'],
+    brandRoots: ['leads', 'growth', 'sales', 'pipeline']
+  },
+  {
     profession: 'wedding service',
     aliases: ['wedding vendor', 'bridal service'],
     services: ['wedding', 'bridal', 'events', 'venue', 'planner', 'photo', 'floral', 'celebrate'],
@@ -617,12 +869,20 @@ const lookup = new Map();
 for (const profile of PROFESSION_PROFILES) {
   const terms = [profile.profession, ...profile.aliases];
   for (const term of terms) {
-    lookup.set(toLookupKey(term), profile);
+    for (const key of toLookupKeys(term)) {
+      lookup.set(key, profile);
+    }
   }
 }
 
 function toLookupKey(value) {
   return normalizeHumanText(value).toLowerCase();
+}
+
+function toLookupKeys(value) {
+  const normalized = toLookupKey(value);
+  const compact = toDomainToken(value);
+  return [...new Set([normalized, compact].filter(Boolean))];
 }
 
 function dedupeTerms(terms) {
@@ -638,16 +898,21 @@ function dedupeTerms(terms) {
 }
 
 export function findProfessionProfile(profession) {
-  const key = toLookupKey(profession);
-  if (!key) return null;
-  if (lookup.has(key)) return lookup.get(key);
+  const keys = toLookupKeys(profession);
+  if (!keys.length) return null;
 
-  const singular = key.endsWith('s') ? key.slice(0, -1) : key;
-  if (lookup.has(singular)) return lookup.get(singular);
+  for (const key of keys) {
+    if (lookup.has(key)) return lookup.get(key);
 
-  for (const [term, profile] of lookup.entries()) {
-    if (key.length >= 4 && (term.includes(key) || key.includes(term))) {
-      return profile;
+    const singular = key.endsWith('s') ? key.slice(0, -1) : key;
+    if (lookup.has(singular)) return lookup.get(singular);
+  }
+
+  for (const key of keys) {
+    for (const [term, profile] of lookup.entries()) {
+      if (key.length >= 4 && (term.includes(key) || key.includes(term))) {
+        return profile;
+      }
     }
   }
 

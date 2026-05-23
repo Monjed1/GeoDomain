@@ -353,6 +353,17 @@ seo consultant, photographer, therapist, veterinarian, web designer,
 app developer, cybersecurity, logistics, solar installer, handyman
 ```
 
+Compact no-space profession inputs are also supported. Examples:
+
+```text
+injurylawyer, divorcelawyer, criminallawyer, immigrationlawyer,
+propertymanager, mortgagebroker, homeinspector, mobilemechanic,
+marketingagency, graphicdesigner, aiconsultant, drivingschool,
+personaltrainer, pressurewashing, urgentcare, dentalimplants,
+estateplanning, pestcontrol, itservices, managedit, aiagency,
+leadgeneration
+```
+
 Examples of automatic service expansion:
 
 ```text
